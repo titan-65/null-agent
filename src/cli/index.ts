@@ -1,0 +1,114 @@
+#!/usr/bin/env node
+
+import type { ProviderName } from "../providers/index.ts";
+
+const args = process.argv.slice(2);
+
+function printHelp(): void {
+  console.log(`
+null-agent - Interactive coding assistant
+
+Usage:
+  null-agent                  Start interactive TUI
+  null-agent "your message"   One-shot mode
+  null-agent --plain          Start plain readline REPL
+  null-agent --server         Start HTTP API server
+  null-agent --help           Show this help
+
+Options:
+  --provider <name>   LLM provider (openai, anthropic)
+  --model <name>      Model name
+  --plain             Use plain readline instead of TUI
+  --server            Start HTTP API server
+  --port <number>     Server port (default: 3737)
+  --host <address>    Server host (default: 127.0.0.1)
+
+Environment:
+  OPENAI_API_KEY      OpenAI API key
+  ANTHROPIC_API_KEY   Anthropic API key
+`);
+}
+
+async function main(): Promise<void> {
+  if (args.includes("--help") || args.includes("-h")) {
+    printHelp();
+    process.exit(0);
+  }
+
+  const providerIndex = args.indexOf("--provider");
+  const modelIndex = args.indexOf("--model");
+  const portIndex = args.indexOf("--port");
+  const hostIndex = args.indexOf("--host");
+  const plainMode = args.includes("--plain");
+  const serverMode = args.includes("--server");
+
+  const provider = providerIndex !== -1 ? (args[providerIndex + 1] as ProviderName) : undefined;
+  const model = modelIndex !== -1 ? args[modelIndex + 1] : undefined;
+  const port = portIndex !== -1 ? parseInt(args[portIndex + 1]!, 10) : 3737;
+  const host = hostIndex !== -1 ? args[hostIndex + 1]! : "127.0.0.1";
+
+  // Collect non-flag arguments as the one-shot message
+  const positionalArgs = args.filter(
+    (arg, i) =>
+      !arg.startsWith("--") &&
+      (providerIndex === -1 || i !== providerIndex + 1) &&
+      (modelIndex === -1 || i !== modelIndex + 1) &&
+      (portIndex === -1 || i !== portIndex + 1) &&
+      (hostIndex === -1 || i !== hostIndex + 1),
+  );
+
+  if (positionalArgs.length > 0) {
+    // One-shot mode
+    const { createProvider } = await import("../providers/index.ts");
+    const { Agent } = await import("../agent/index.ts");
+    const { createDefaultRegistry } = await import("../tools/index.ts");
+
+    const providerName =
+      provider ??
+      (process.env["ANTHROPIC_API_KEY"]
+        ? "anthropic"
+        : process.env["OPENAI_API_KEY"]
+          ? "openai"
+          : "anthropic");
+
+    const llmProvider = createProvider(providerName);
+    const agent = new Agent({
+      provider: llmProvider,
+      tools: createDefaultRegistry(),
+      model,
+    });
+
+    const message = positionalArgs.join(" ");
+    const result = await agent.chat(message, {
+      onText: (text) => process.stdout.write(text),
+      onToolCall: (name) => {
+        process.stderr.write(`\n  ⚙ ${name}\n`);
+      },
+      onToolResult: (name, result, isError) => {
+        const prefix = isError ? "✗" : "✓";
+        process.stderr.write(`  ${prefix} ${name}\n`);
+      },
+    });
+
+    if (!result.content) {
+      process.stdout.write("\n");
+    }
+  } else if (serverMode) {
+    // API server mode
+    const { startServer } = await import("../server/index.ts");
+    await startServer({ port, host, provider, model });
+  } else if (plainMode) {
+    // Plain readline REPL
+    const { startRepl } = await import("./repl.ts");
+    await startRepl({ provider, model });
+  } else {
+    // TUI mode (default)
+    const { startTui } = await import("../tui/index.tsx");
+    await startTui({ provider, model });
+  }
+}
+
+main().catch((error) => {
+  console.error("Fatal error:", error);
+  process.exit(1);
+});

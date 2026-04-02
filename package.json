@@ -1,0 +1,67 @@
+{
+  "name": "null-agent",
+  "version": "0.0.0",
+  "description": "Interactive coding assistant library with multi-provider LLM support.",
+  "homepage": "https://github.com/vantolbennett/vantolbennett-blog/tree/main/packages/null-agent",
+  "bugs": {
+    "url": "https://github.com/vantolbennett/vantolbennett-blog/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vantolbennett/vantolbennett-blog.git",
+    "directory": "packages/null-agent"
+  },
+  "bin": {
+    "null-agent": "./dist/cli/index.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./cli": "./dist/cli/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "vp pack",
+    "dev": "vp pack --watch",
+    "test": "vp test",
+    "check": "vp check",
+    "prepublishOnly": "vp run build"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@inkjs/ui": "^2.0.0",
+    "@types/node": "^25.5.0",
+    "@typescript/native-preview": "7.0.0-dev.20260328.1",
+    "bumpp": "^11.0.1",
+    "ink": "^6.8.0",
+    "react": "^19.2.4",
+    "typescript": "^6.0.2",
+    "vite-plus": "^0.1.14"
+  },
+  "peerDependencies": {
+    "@inkjs/ui": ">=2.0.0",
+    "ink": ">=6.0.0",
+    "react": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@inkjs/ui": {
+      "optional": true
+    },
+    "ink": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=20.19"
+  }
+}

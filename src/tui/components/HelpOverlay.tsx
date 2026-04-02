@@ -1,0 +1,66 @@
+import { createElement as h } from "react";
+import { Box, Text } from "ink";
+
+export function HelpOverlay() {
+  return h(
+    Box,
+    {
+      flexDirection: "column",
+      flexGrow: 1,
+      paddingX: 2,
+      paddingY: 1,
+    },
+    h(Text, { bold: true, color: "blue" }, "null-agent — Keyboard Shortcuts"),
+    h(Text, null, ""),
+    h(
+      Box,
+      { flexDirection: "column", gap: 1 },
+      h(Shortcut, { k: "Enter", d: "Send message" }),
+      h(Shortcut, { k: "Ctrl+C", d: "Exit" }),
+      h(Shortcut, { k: "Ctrl+H", d: "Toggle this help" }),
+      h(Shortcut, { k: "Ctrl+A", d: "Move cursor to start" }),
+      h(Shortcut, { k: "Ctrl+E", d: "Move cursor to end" }),
+      h(Shortcut, { k: "←/→", d: "Move cursor" }),
+    ),
+    h(Text, null, ""),
+    h(Text, { bold: true, color: "blue" }, "Commands"),
+    h(Text, null, ""),
+    h(
+      Box,
+      { flexDirection: "column", gap: 1 },
+      h(Shortcut, { k: "/help", d: "Toggle help overlay" }),
+      h(Shortcut, { k: "/clear", d: "Clear conversation history" }),
+      h(Shortcut, { k: "/context", d: "Show project context" }),
+      h(Shortcut, { k: "/history", d: "List past conversations" }),
+      h(Shortcut, { k: "/resume <id>", d: "Resume a past conversation" }),
+      h(Shortcut, { k: "/tasks", d: "Show tracked tasks" }),
+      h(Shortcut, { k: "/done <id>", d: "Mark a task complete" }),
+      h(Shortcut, { k: "/config", d: "Show configuration" }),
+      h(Shortcut, { k: "/config <key> <val>", d: "Update config" }),
+      h(Shortcut, { k: "/exit", d: "Exit the assistant" }),
+    ),
+    h(Text, null, ""),
+    h(Text, { bold: true, color: "blue" }, "Personality"),
+    h(Text, null, ""),
+    h(Text, { color: "gray" }, "• tone: professional | casual | concise"),
+    h(Text, { color: "gray" }, "• verbosity: minimal | balanced | detailed"),
+    h(Text, { color: "gray" }, "• proactivity: passive | balanced | active"),
+    h(Text, { color: "gray" }, "• Config saved to ~/.null-agent/config.json"),
+    h(Text, null, ""),
+    h(Text, { bold: true, color: "blue" }, "Tips"),
+    h(Text, null, ""),
+    h(Text, { color: "gray" }, "• Ask me to review code, fix bugs, or explain files"),
+    h(Text, { color: "gray" }, "• I can read, write files, and run shell commands"),
+    h(Text, { color: "gray" }, "• I have git tools — ask about status, diffs, or logs"),
+    h(Text, { color: "gray" }, "• I know your project structure and conventions"),
+  );
+}
+
+function Shortcut(props: { k: string; d: string }) {
+  return h(
+    Box,
+    { gap: 2 },
+    h(Text, { color: "yellow", bold: true }, props.k.padEnd(14)),
+    h(Text, { color: "gray" }, props.d),
+  );
+}
