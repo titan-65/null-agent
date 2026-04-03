@@ -11,10 +11,6 @@ export class AnthropicProvider extends BaseProvider {
     this.apiKey = options?.apiKey ?? process.env["ANTHROPIC_API_KEY"] ?? "";
     this.baseUrl = options?.baseUrl ?? "https://api.anthropic.com/v1/messages";
     this.defaultModel = options?.model ?? "claude-sonnet-4-20250514";
-
-    if (!this.apiKey) {
-      throw new Error("Anthropic API key not found. Set ANTHROPIC_API_KEY environment variable.");
-    }
   }
 
   async *chat(messages: Message[], options?: ChatOptions): AsyncIterable<StreamChunk> {

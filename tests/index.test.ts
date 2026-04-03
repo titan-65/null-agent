@@ -34,7 +34,7 @@ test("toProviderTools converts to provider format", () => {
 });
 
 test("file_read tool executes successfully", async () => {
-  const result = await fileReadTool.execute({ path: "package.json" });
+  const result = await fileReadTool.execute({ path: "packages/null-agent/package.json" });
   expect(result.isError).toBeUndefined();
   expect(result.content).toContain("null-agent");
 });

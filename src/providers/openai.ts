@@ -11,10 +11,6 @@ export class OpenAIProvider extends BaseProvider {
     this.apiKey = options?.apiKey ?? process.env["OPENAI_API_KEY"] ?? "";
     this.baseUrl = options?.baseUrl ?? "https://api.openai.com/v1/chat/completions";
     this.defaultModel = options?.model ?? "gpt-4o";
-
-    if (!this.apiKey) {
-      throw new Error("OpenAI API key not found. Set OPENAI_API_KEY environment variable.");
-    }
   }
 
   async *chat(messages: Message[], options?: ChatOptions): AsyncIterable<StreamChunk> {

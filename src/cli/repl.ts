@@ -1,7 +1,11 @@
 import { createInterface } from "node:readline";
 import { Agent } from "../agent/index.ts";
-import type { ProviderName } from "../providers/index.ts";
-import { createProvider } from "../providers/index.ts";
+import {
+  createProvider,
+  detectProvider,
+  type ProviderName,
+  PROVIDERS,
+} from "../providers/index.ts";
 import { createDefaultRegistry } from "../tools/index.ts";
 import {
   printAssistant,
@@ -15,9 +19,9 @@ export async function startRepl(options?: {
   provider?: ProviderName;
   model?: string;
 }): Promise<void> {
-  const providerName = options?.provider ?? getProviderFromEnv();
+  const providerName = options?.provider ?? detectProvider() ?? "openai";
   const provider = createProvider(providerName);
-  const model = options?.model ?? getDefaultModel(providerName);
+  const model = options?.model ?? PROVIDERS[providerName].defaultModel;
 
   const agent = new Agent({
     provider,
@@ -77,20 +81,5 @@ export async function startRepl(options?: {
     } catch (error) {
       printError(error instanceof Error ? error.message : String(error));
     }
-  }
-}
-
-function getProviderFromEnv(): ProviderName {
-  if (process.env["ANTHROPIC_API_KEY"]) return "anthropic";
-  if (process.env["OPENAI_API_KEY"]) return "openai";
-  return "anthropic"; // default
-}
-
-function getDefaultModel(provider: ProviderName): string {
-  switch (provider) {
-    case "openai":
-      return "gpt-4o";
-    case "anthropic":
-      return "claude-sonnet-4-20250514";
   }
 }

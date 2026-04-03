@@ -16,7 +16,7 @@ Usage:
   null-agent --help           Show this help
 
 Options:
-  --provider <name>   LLM provider (openai, anthropic)
+  --provider <name>   LLM provider (openai, anthropic, gemini, openrouter)
   --model <name>      Model name
   --plain             Use plain readline instead of TUI
   --server            Start HTTP API server
@@ -26,6 +26,8 @@ Options:
 Environment:
   OPENAI_API_KEY      OpenAI API key
   ANTHROPIC_API_KEY   Anthropic API key
+  GEMINI_API_KEY      Google Gemini API key (free tier available)
+  OPENROUTER_API_KEY  OpenRouter API key (free models available)
 `);
 }
 
@@ -57,55 +59,87 @@ async function main(): Promise<void> {
       (hostIndex === -1 || i !== hostIndex + 1),
   );
 
-  if (positionalArgs.length > 0) {
-    // One-shot mode
-    const { createProvider } = await import("../providers/index.ts");
-    const { Agent } = await import("../agent/index.ts");
-    const { createDefaultRegistry } = await import("../tools/index.ts");
+  // Resolve provider
+  const { detectProvider, createProvider, ProviderError } = await import("../providers/index.ts");
 
-    const providerName =
-      provider ??
-      (process.env["ANTHROPIC_API_KEY"]
-        ? "anthropic"
-        : process.env["OPENAI_API_KEY"]
-          ? "openai"
-          : "anthropic");
+  const providerName = provider ?? detectProvider();
 
-    const llmProvider = createProvider(providerName);
-    const agent = new Agent({
-      provider: llmProvider,
-      tools: createDefaultRegistry(),
-      model,
-    });
-
-    const message = positionalArgs.join(" ");
-    const result = await agent.chat(message, {
-      onText: (text) => process.stdout.write(text),
-      onToolCall: (name) => {
-        process.stderr.write(`\n  ⚙ ${name}\n`);
-      },
-      onToolResult: (name, result, isError) => {
-        const prefix = isError ? "✗" : "✓";
-        process.stderr.write(`  ${prefix} ${name}\n`);
-      },
-    });
-
-    if (!result.content) {
-      process.stdout.write("\n");
-    }
-  } else if (serverMode) {
-    // API server mode
-    const { startServer } = await import("../server/index.ts");
-    await startServer({ port, host, provider, model });
-  } else if (plainMode) {
-    // Plain readline REPL
-    const { startRepl } = await import("./repl.ts");
-    await startRepl({ provider, model });
-  } else {
-    // TUI mode (default)
-    const { startTui } = await import("../tui/index.tsx");
-    await startTui({ provider, model });
+  if (!providerName) {
+    printNoProviderError();
+    process.exit(1);
   }
+
+  try {
+    if (positionalArgs.length > 0) {
+      // One-shot mode
+      const { Agent } = await import("../agent/index.ts");
+      const { createDefaultRegistry } = await import("../tools/index.ts");
+
+      const llmProvider = createProvider(providerName, { model });
+      const agent = new Agent({
+        provider: llmProvider,
+        tools: createDefaultRegistry(),
+        model,
+      });
+
+      const message = positionalArgs.join(" ");
+      const result = await agent.chat(message, {
+        onText: (text) => process.stdout.write(text),
+        onToolCall: (name) => {
+          process.stderr.write(`\n  ⚙ ${name}\n`);
+        },
+        onToolResult: (name, result, isError) => {
+          const prefix = isError ? "✗" : "✓";
+          process.stderr.write(`  ${prefix} ${name}\n`);
+        },
+      });
+
+      if (!result.content) {
+        process.stdout.write("\n");
+      }
+    } else if (serverMode) {
+      // API server mode
+      const { startServer } = await import("../server/index.ts");
+      await startServer({ port, host, provider: providerName, model });
+    } else if (plainMode) {
+      // Plain readline REPL
+      const { startRepl } = await import("./repl.ts");
+      await startRepl({ provider: providerName, model });
+    } else {
+      // TUI mode (default)
+      const { startTui } = await import("../tui/index.tsx");
+      await startTui({ provider: providerName, model });
+    }
+  } catch (error) {
+    if (error instanceof ProviderError) {
+      console.error(error.message);
+      process.exit(1);
+    }
+    throw error;
+  }
+}
+
+function printNoProviderError(): void {
+  console.error(`
+  No API key found. Set one of:
+
+    export OPENAI_API_KEY='sk-...'
+    export ANTHROPIC_API_KEY='sk-ant-...'
+    export GEMINI_API_KEY='...'         (free tier available)
+    export OPENROUTER_API_KEY='...'     (free models available)
+
+  Or specify a provider explicitly:
+
+    null-agent --provider gemini
+    null-agent --provider openrouter
+
+  Free options:
+    • Google Gemini — free tier with gemini-2.0-flash
+    • OpenRouter — free models like gemini-2.0-flash, llama-3.1
+
+  Get a free Gemini key:  https://aistudio.google.com/apikey
+  Get a free OpenRouter key: https://openrouter.ai/keys
+`);
 }
 
 main().catch((error) => {

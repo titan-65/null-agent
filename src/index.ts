@@ -12,8 +12,15 @@ export type {
 export { BaseProvider } from "./providers/base.ts";
 export { OpenAIProvider } from "./providers/openai.ts";
 export { AnthropicProvider } from "./providers/anthropic.ts";
-export { createProvider } from "./providers/index.ts";
-export type { ProviderName } from "./providers/index.ts";
+export {
+  createProvider,
+  detectProvider,
+  getAvailableProviders,
+  getFreeProviders,
+  ProviderError,
+  PROVIDERS,
+} from "./providers/index.ts";
+export type { ProviderName, ProviderInfo } from "./providers/index.ts";
 
 // Tools
 export type { ToolDefinition, ToolResult as ToolResultType } from "./tools/types.ts";

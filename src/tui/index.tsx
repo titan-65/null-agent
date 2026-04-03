@@ -2,8 +2,12 @@ import { createElement as h } from "react";
 import { render } from "ink";
 import { App } from "./app.tsx";
 import { Agent } from "../agent/index.ts";
-import { createProvider } from "../providers/index.ts";
-import type { ProviderName } from "../providers/index.ts";
+import {
+  createProvider,
+  detectProvider,
+  type ProviderName,
+  PROVIDERS,
+} from "../providers/index.ts";
 import { createDefaultRegistry } from "../tools/index.ts";
 import { MemoryStore } from "../memory/store.ts";
 import { scanProject } from "../context/scanner.ts";
@@ -18,9 +22,9 @@ export async function startTui(options?: {
   // Load user config
   const config = await loadConfig();
 
-  const providerName = options?.provider ?? config.defaultProvider ?? getProviderFromEnv();
+  const providerName = options?.provider ?? config.defaultProvider ?? detectProvider() ?? "openai";
   const provider = createProvider(providerName);
-  const model = options?.model ?? config.defaultModel ?? getDefaultModel(providerName);
+  const model = options?.model ?? config.defaultModel ?? PROVIDERS[providerName].defaultModel;
   const tools = createDefaultRegistry();
 
   // Initialize memory and project knowledge
@@ -81,19 +85,4 @@ export async function startTui(options?: {
         : undefined,
     }),
   );
-}
-
-function getProviderFromEnv(): ProviderName {
-  if (process.env["ANTHROPIC_API_KEY"]) return "anthropic";
-  if (process.env["OPENAI_API_KEY"]) return "openai";
-  return "anthropic";
-}
-
-function getDefaultModel(provider: ProviderName): string {
-  switch (provider) {
-    case "openai":
-      return "gpt-4o";
-    case "anthropic":
-      return "claude-sonnet-4-20250514";
-  }
 }
