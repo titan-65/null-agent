@@ -13,6 +13,9 @@ Usage:
   null-agent "your message"   One-shot mode
   null-agent --plain          Start plain readline REPL
   null-agent --server         Start HTTP API server
+  null-agent auth             Configure API keys interactively
+  null-agent auth status      Show API key status
+  null-agent auth <provider>  Configure one provider (openai, anthropic, gemini, openrouter)
   null-agent --help           Show this help
 
 Options:
@@ -28,6 +31,8 @@ Environment:
   ANTHROPIC_API_KEY   Anthropic API key
   GEMINI_API_KEY      Google Gemini API key (free tier available)
   OPENROUTER_API_KEY  OpenRouter API key (free models available)
+
+Keys are stored in ~/.null-agent/credentials.json
 `);
 }
 
@@ -35,6 +40,33 @@ async function main(): Promise<void> {
   if (args.includes("--help") || args.includes("-h")) {
     printHelp();
     process.exit(0);
+  }
+
+  // Auth commands
+  if (args[0] === "auth") {
+    const { interactiveAuth, printAuthStatus } = await import("../auth/index.ts");
+    const provider = args[1]; // null-agent auth <provider>
+    if (provider === "status") {
+      await printAuthStatus();
+    } else {
+      await interactiveAuth(provider);
+    }
+    process.exit(0);
+  }
+
+  // Load stored credentials into process.env
+  const { loadCredentials } = await import("../auth/index.ts");
+  const stored = await loadCredentials();
+  for (const [provider, key] of Object.entries(stored)) {
+    const envKey = {
+      openai: "OPENAI_API_KEY",
+      anthropic: "ANTHROPIC_API_KEY",
+      gemini: "GEMINI_API_KEY",
+      openrouter: "OPENROUTER_API_KEY",
+    }[provider];
+    if (envKey && !process.env[envKey]) {
+      process.env[envKey] = key;
+    }
   }
 
   const providerIndex = args.indexOf("--provider");
@@ -121,17 +153,17 @@ async function main(): Promise<void> {
 
 function printNoProviderError(): void {
   console.error(`
-  No API key found. Set one of:
+  No API key found.
 
+  Quick setup (interactive):
+    null-agent auth              Configure all providers
+    null-agent auth openai       Configure one provider
+
+  Or set environment variables:
     export OPENAI_API_KEY='sk-...'
     export ANTHROPIC_API_KEY='sk-ant-...'
     export GEMINI_API_KEY='...'         (free tier available)
     export OPENROUTER_API_KEY='...'     (free models available)
-
-  Or specify a provider explicitly:
-
-    null-agent --provider gemini
-    null-agent --provider openrouter
 
   Free options:
     • Google Gemini — free tier with gemini-2.0-flash
