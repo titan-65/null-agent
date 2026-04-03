@@ -1,16 +1,29 @@
 {
   "name": "null-agent",
-  "version": "0.0.0",
-  "description": "Interactive coding assistant library with multi-provider LLM support.",
-  "homepage": "https://github.com/vantolbennett/vantolbennett-blog/tree/main/packages/null-agent",
+  "version": "0.1.0",
+  "description": "Interactive coding assistant library with multi-provider LLM support, tool system, and multi-agent orchestration.",
+  "keywords": [
+    "agent",
+    "ai",
+    "anthropic",
+    "cli",
+    "coding-assistant",
+    "llm",
+    "multi-agent",
+    "openai",
+    "orchestrator",
+    "tool-use",
+    "tui"
+  ],
+  "homepage": "https://immutable.dev/packages/null-agent",
   "bugs": {
-    "url": "https://github.com/vantolbennett/vantolbennett-blog/issues"
+    "url": "https://github.com/titan-65/null-agent/issues"
   },
   "license": "MIT",
+  "author": "Vantol Bennett",
   "repository": {
     "type": "git",
-    "url": "https://github.com/vantolbennett/vantolbennett-blog.git",
-    "directory": "packages/null-agent"
+    "url": "git+https://github.com/titan-65/null-agent.git"
   },
   "bin": {
     "null-agent": "./dist/cli/index.mjs"
@@ -19,6 +32,7 @@
     "dist"
   ],
   "type": "module",
+  "types": "./dist/index.d.mts",
   "exports": {
     ".": "./dist/index.mjs",
     "./cli": "./dist/cli/index.mjs",
@@ -62,6 +76,6 @@
     }
   },
   "engines": {
-    "node": ">=20.19"
+    "node": ">=20"
   }
 }
