@@ -1,8 +1,8 @@
 # null-agent
 
-Interactive coding assistant library with multi-provider LLM support, a built-in tool system, conversation persistence, project awareness, and multi-agent orchestration.
+Interactive coding assistant library with multi-provider LLM support, a rich terminal UI, tool system, conversation memory, project awareness, and multi-agent orchestration.
 
-Use it as a library to build AI-powered developer tools, or run it directly as a CLI with four different interfaces.
+Use it as a **library** to build AI-powered developer tools, or run it directly as a **CLI** with four different interfaces.
 
 ## Install
 
@@ -30,6 +30,21 @@ npm install ink @inkjs/ui react  # only if using the TUI
 
 ## Quick Start
 
+### First-Time Setup
+
+```bash
+# Interactive setup — pick a provider, enter your key
+null-agent auth
+
+# Or configure one provider directly
+null-agent auth openai
+
+# Check which providers are configured
+null-agent auth status
+```
+
+Keys are stored in `~/.null-agent/credentials.json` and loaded automatically on startup.
+
 ### As a Library
 
 ```ts
@@ -55,7 +70,7 @@ null-agent
 # One-shot mode
 null-agent "explain the auth module"
 
-# Plain REPL
+# Plain REPL (no TUI dependencies)
 null-agent --plain
 
 # HTTP API server
@@ -64,22 +79,70 @@ null-agent --server --port 3737
 
 ## Providers
 
-null-agent supports multiple LLM providers. Set the corresponding API key as an environment variable.
+null-agent supports 4 LLM providers. Auto-detects which provider has a key configured.
 
-| Provider  | Env Variable        | Default Model              |
-| --------- | ------------------- | -------------------------- |
-| Anthropic | `ANTHROPIC_API_KEY` | `claude-sonnet-4-20250514` |
-| OpenAI    | `OPENAI_API_KEY`    | `gpt-4o`                   |
+| Provider     | Env Variable         | Default Model              | Free Models                      |
+| ------------ | -------------------- | -------------------------- | -------------------------------- |
+| OpenAI       | `OPENAI_API_KEY`     | `gpt-4o`                   | —                                |
+| Anthropic    | `ANTHROPIC_API_KEY`  | `claude-sonnet-4-20250514` | —                                |
+| Google Gemini| `GEMINI_API_KEY`     | `gemini-2.0-flash`         | `gemini-2.0-flash` (free tier)   |
+| OpenRouter   | `OPENROUTER_API_KEY` | `google/gemini-2.0-flash`  | `gemini-2.0-flash`, `llama-3.1`  |
 
 ```ts
-import { createProvider } from "null-agent";
+import { createProvider, detectProvider, getAvailableProviders } from "null-agent";
 
-// Explicit provider
-const anthropic = createProvider("anthropic");
-const openai = createProvider("openai");
+// Auto-detect provider from available keys
+const provider = createProvider(detectProvider() ?? "openai");
 
-// With custom model
+// Explicit provider with custom model
 const claude = createProvider("anthropic", { model: "claude-opus-4-20250514" });
+
+// List available providers
+const available = getAvailableProviders(); // ["openai", "gemini"]
+```
+
+### Free Options
+
+No API key? Start free:
+
+```bash
+# Gemini free tier
+export GEMINI_API_KEY='...'
+null-agent
+
+# OpenRouter free models
+export OPENROUTER_API_KEY='...'
+null-agent --provider openrouter
+```
+
+Get a free Gemini key: https://aistudio.google.com/apikey
+Get a free OpenRouter key: https://openrouter.ai/keys
+
+## Authentication
+
+### Interactive Setup
+
+```bash
+null-agent auth              # Pick a provider, enter key interactively
+null-agent auth openai       # Configure one provider directly
+null-agent auth status       # Show which providers are configured
+```
+
+### How Keys Are Resolved
+
+1. Environment variable (highest priority)
+2. Stored credentials in `~/.null-agent/credentials.json`
+3. `.null-agent.json` config file
+
+### Setting Keys
+
+```bash
+# Environment variables (session-only)
+export OPENAI_API_KEY='sk-...'
+export GEMINI_API_KEY='...'
+
+# Or use the auth command (persistent)
+null-agent auth openai
 ```
 
 ## Tools
@@ -98,6 +161,8 @@ null-agent ships with 10 built-in tools covering file operations, shell executio
 | `gitAddTool`    | `git_add`    | Git add                                      |
 | `gitCommitTool` | `git_commit` | Git commit                                   |
 | `gitShowTool`   | `git_show`   | Git show                                     |
+
+### Using Tools
 
 ```ts
 import { ToolRegistry, builtinTools, fileReadTool, shellTool } from "null-agent";
@@ -125,8 +190,7 @@ registry.register({
     required: ["environment"],
   },
   execute: async ({ environment }) => {
-    // your deploy logic
-    return `Deployed to ${environment}`;
+    return { content: `Deployed to ${environment}` };
   },
 });
 ```
@@ -135,11 +199,48 @@ registry.register({
 
 ### Terminal UI
 
-Full interactive terminal interface built with [Ink](https://github.com/vadimdemedes/ink). Features a status bar, chat panel with message bubbles, animated NullFace mascot, slash commands (`/help`, `/clear`, `/context`, `/tasks`, `/config`), and formatted tool call display.
+Full interactive terminal interface built with [Ink](https://github.com/vadimdemedes/ink). Features a status bar, chat panel with message bubbles, animated Null mascot (`◉◡`), slash commands, and formatted tool call display.
+
+```
+┌─────────────────────────────────┐
+│ null-agent v0.1.0 · project     │  ← Status bar
+├─────────────────────────────────┤
+│                                 │
+│  ▸ you                          │
+│    Read the config file         │
+│                                 │
+│  ▸ assistant                    │
+│  ┌─────────────────────────┐    │
+│  │ ⚙ file_read              │    │
+│  │ ✓ file_read → 12 lines  │    │
+│  └─────────────────────────┘    │
+│    The config contains...       │
+│                                 │
+├─────────────────────────────────┤
+│ ◉◡ ready · /help                │  ← Agent bar (always visible)
+├─────────────────────────────────┤
+│ > _                             │  ← Input
+└─────────────────────────────────┘
+```
 
 ```bash
 null-agent
 ```
+
+**Slash Commands:**
+
+| Command              | Description                  |
+| -------------------- | ---------------------------- |
+| `/help`              | Show keyboard shortcuts      |
+| `/clear`             | Clear conversation history   |
+| `/context`           | Show project context         |
+| `/history`           | List past conversations      |
+| `/resume <id>`       | Resume a past conversation   |
+| `/tasks`             | Show tracked tasks           |
+| `/done <id>`         | Mark a task complete         |
+| `/config`            | Show personality config      |
+| `/config tone casual`| Change tone setting          |
+| `/exit`              | Exit                         |
 
 ### Readline REPL
 
@@ -151,26 +252,28 @@ null-agent --plain
 
 ### HTTP API Server
 
-REST API server with streaming SSE support. Default port 3737.
+REST API server with streaming SSE support. Default port 3737. Zero dependencies (uses Node.js built-in `http`).
 
 ```bash
-null-agent --server --port 3737
+null-agent --server --port 3737 --host 0.0.0.0
 ```
 
 **Endpoints:**
 
-| Method   | Path             | Description                  |
-| -------- | ---------------- | ---------------------------- |
-| `POST`   | `/chat`          | Send a message, get response |
-| `POST`   | `/chat/stream`   | Stream response via SSE      |
-| `GET`    | `/history`       | Get conversation history     |
-| `DELETE` | `/history`       | Clear conversation history   |
-| `GET`    | `/conversations` | List saved conversations     |
-| `POST`   | `/conversations` | Create/load a conversation   |
-| `GET`    | `/tasks`         | List tasks                   |
-| `POST`   | `/tasks`         | Add a task                   |
-| `PATCH`  | `/config`        | Update config                |
-| `GET`    | `/health`        | Health check                 |
+| Method   | Path                      | Description                    |
+| -------- | ------------------------- | ------------------------------ |
+| `POST`   | `/chat`                   | Send a message, get response   |
+| `POST`   | `/chat/stream`            | Stream response via SSE        |
+| `GET`    | `/history`                | Get conversation history       |
+| `DELETE` | `/history`                | Clear conversation history     |
+| `GET`    | `/conversations`          | List saved conversations       |
+| `POST`   | `/conversations/resume`   | Resume a conversation          |
+| `GET`    | `/tasks`                  | List tasks                     |
+| `POST`   | `/tasks`                  | Add a task                     |
+| `POST`   | `/tasks/:id/done`         | Complete a task                |
+| `GET`    | `/config`                 | Get configuration              |
+| `PATCH`  | `/config`                 | Update configuration           |
+| `GET`    | `/health`                 | Health check                   |
 
 ### One-Shot CLI
 
@@ -179,37 +282,64 @@ Send a single message and print the response. Good for scripting.
 ```bash
 null-agent "what does this function do?"
 null-agent --provider openai "summarize the changes"
+null-agent --provider gemini --model gemini-2.0-flash "explain git rebase"
 ```
 
 ## Configuration
 
 ### Personality
 
-Control the agent's behavior:
+Control the agent's tone, verbosity, and proactivity:
 
 ```ts
 import { loadConfig, saveConfig } from "null-agent";
 
-const config = loadConfig();
+const config = await loadConfig();
 config.personality = {
-  tone: "casual", // "professional" | "casual" | "concise"
+  tone: "casual",       // "professional" | "casual" | "concise"
   verbosity: "balanced", // "minimal" | "balanced" | "detailed"
   proactivity: "active", // "passive" | "balanced" | "active"
 };
-saveConfig(config);
+await saveConfig(config);
+```
+
+Or via CLI:
+```bash
+null-agent config
+null-agent config tone casual
+null-agent config verbosity minimal
+null-agent config proactivity active
 ```
 
 Config is persisted at `~/.null-agent/config.json`.
 
 ### Unified Config
 
-Layered config loading: defaults < env vars < `~/.null-agent.json` < `.null-agent.json` in project root.
+Layered config loading with priority: defaults < env vars < `~/.null-agent/config.json` < `.null-agent.json` in project root.
 
 ```ts
 import { loadUnifiedConfig } from "null-agent";
 
-const config = loadUnifiedConfig("./my-project");
+const config = await loadUnifiedConfig("./my-project");
 // config.provider, config.personality, config.permissions, etc.
+```
+
+### Project Config
+
+Create `.null-agent.json` in your project root for project-specific settings:
+
+```json
+{
+  "personality": {
+    "tone": "professional",
+    "verbosity": "detailed"
+  },
+  "permissions": {
+    "mode": "confirm",
+    "allowWrite": true,
+    "denyPatterns": ["rm -rf"]
+  }
+}
 ```
 
 ## Memory
@@ -237,13 +367,60 @@ null-agent can analyze your project to understand its structure:
 import { scanProject } from "null-agent";
 
 const knowledge = await scanProject("./my-project");
-console.log(knowledge.language); // "typescript"
-console.log(knowledge.framework); // "react"
-console.log(knowledge.packageManager); // "pnpm"
-console.log(knowledge.testCommand); // "vitest"
+console.log(knowledge.language);        // "typescript"
+console.log(knowledge.framework);       // "react"
+console.log(knowledge.packageManager);  // "pnpm"
+console.log(knowledge.testCommand);     // "vitest"
+console.log(knowledge.conventions);     // { typescript: true, testFramework: "vitest" }
 ```
 
-## Orchestrator
+Detects: Next.js, Nuxt, React, Vue, Express, Fastify, Hono, NestJS, and more.
+
+## Awareness
+
+Real-time git monitoring and file watching:
+
+```ts
+import { AwarenessManager } from "null-agent";
+
+const awareness = new AwarenessManager({ projectDir: "./my-project" });
+awareness.start({
+  onEvent: (event) => {
+    console.log(`${event.type}: ${event.message}`);
+  },
+});
+```
+
+**Events:**
+
+| Event          | Trigger                      |
+| -------------- | ---------------------------- |
+| `git:change`   | New staged/modified files    |
+| `git:branch`   | Branch switch detected       |
+| `git:conflict` | Merge conflicts found        |
+| `file:create`  | New files created            |
+| `file:modify`  | Files modified               |
+| `file:delete`  | Files deleted                |
+
+## Task Tracking
+
+Tasks are automatically extracted from conversations:
+
+```ts
+import { Agent } from "null-agent";
+
+const agent = new Agent({ provider, tools });
+await agent.chat("We need to refactor the auth module");
+
+// Tasks are auto-extracted
+const tasks = agent.getOpenTasks();
+
+// Manual task management
+agent.addTask("Write unit tests for auth");
+agent.completeTask("task-id");
+```
+
+## Multi-Agent Orchestration
 
 The agent can spawn parallel sub-agents for complex tasks:
 
@@ -257,53 +434,96 @@ const agent = new Agent({
 });
 
 // The agent can use the "spawn_task" tool to delegate work
-const result = await agent.chat("Refactor these 3 files in parallel");
+const result = await agent.chat("Investigate these 3 files in parallel");
 ```
 
-Concurrency is capped at 5 concurrent sub-agents, 3 spawns per turn, 30s timeout per sub-agent.
+Safety limits: 5 concurrent sub-agents, 3 spawns per turn, 30s timeout per sub-agent.
 
 ## Plugin System
 
 Extend null-agent with custom plugins:
 
 ```ts
-import { PluginManager } from "null-agent";
+import { PluginManager, EventBus } from "null-agent";
 
-const plugin = {
+const bus = new EventBus();
+const manager = new PluginManager(bus, process.cwd());
+
+await manager.register({
   name: "my-plugin",
   version: "1.0.0",
   setup(context) {
-    context.addTool({
+    context.registerTool({
       name: "my_tool",
       description: "Does something useful",
       parameters: { type: "object", properties: {} },
-      execute: async () => "done",
+      execute: async () => ({ content: "done" }),
     });
-    context.on("agent:text", (text) => {
-      console.log("Agent said:", text);
+    context.bus.on("agent:text", (event) => {
+      console.log("Agent said:", event.data);
     });
   },
-};
-
-const manager = new PluginManager();
-manager.register(plugin);
+});
 ```
 
-## Awareness
+## Event Bus
 
-Real-time git monitoring and file watching:
+Decoupled communication between modules:
 
 ```ts
-import { AwarenessManager } from "null-agent";
+import { EventBus, Events } from "null-agent";
 
-const awareness = new AwarenessManager();
-awareness.on("git:change", (event) => {
-  console.log("Git changed:", event);
+const bus = new EventBus();
+
+bus.on(Events.TOOL_AFTER, (event) => {
+  console.log(`Tool ${event.data.name} completed`);
 });
-awareness.on("file:modify", (event) => {
-  console.log("File modified:", event.path);
+
+bus.on(Events.AGENT_DONE, (event) => {
+  console.log("Agent finished:", event.data);
 });
-await awareness.start();
+```
+
+## Permission System
+
+Control what the agent can do:
+
+```ts
+import { PermissionManager } from "null-agent";
+
+const permissions = new PermissionManager({
+  mode: "confirm",  // "auto" | "confirm" | "plan"
+  allowWrite: true,
+  allowShell: true,
+  allowGit: true,
+  denyPatterns: ["rm -rf", "sudo"],
+});
+```
+
+**Modes:**
+- `auto` — execute everything
+- `confirm` — ask before destructive operations
+- `plan` — read-only mode
+
+## Architecture
+
+```
+src/
+  providers/       LLM provider abstraction (OpenAI, Anthropic, Gemini, OpenRouter)
+  tools/           Tool system (file, shell, git, spawn)
+  agent/           Agent loop, orchestrator, tasks, suggestions, personality
+  cli/             CLI entry point, REPL, output formatting
+  tui/             Ink terminal UI (StatusBar, ChatPanel, InputBar, NullFace)
+  server/          HTTP API server with SSE streaming
+  memory/          Conversation persistence
+  context/         Project knowledge scanning
+  awareness/       Git monitoring, file watching
+  bus/             Event bus for decoupled communication
+  config/          Unified config system
+  permission/      Permission management
+  plugin/          Plugin architecture
+  command/         Command pattern with undo support
+  auth/            API key management
 ```
 
 ## CLI Reference
@@ -316,10 +536,13 @@ Usage:
   null-agent "your message"   One-shot mode
   null-agent --plain          Start plain readline REPL
   null-agent --server         Start HTTP API server
+  null-agent auth             Configure API keys interactively
+  null-agent auth status      Show API key status
+  null-agent auth <provider>  Configure one provider
   null-agent --help           Show this help
 
 Options:
-  --provider <name>   LLM provider (openai, anthropic)
+  --provider <name>   LLM provider (openai, anthropic, gemini, openrouter)
   --model <name>      Model name
   --plain             Use plain readline instead of TUI
   --server            Start HTTP API server
@@ -329,6 +552,8 @@ Options:
 Environment:
   OPENAI_API_KEY      OpenAI API key
   ANTHROPIC_API_KEY   Anthropic API key
+  GEMINI_API_KEY      Google Gemini API key (free tier available)
+  OPENROUTER_API_KEY  OpenRouter API key (free models available)
 ```
 
 ## License
