@@ -4,48 +4,46 @@ export interface IdleActivity {
 }
 
 const ENCOURAGEMENTS: string[] = [
-  "You're making great progress today.",
-  "Clean code is happy code.",
-  "Small improvements compound over time.",
-  "Take a break if you need one.",
+  "You're making good progress today.",
+  "Small improvements add up over time.",
+  "Take a breather if you need one — I'll be here.",
   "Every refactor makes the next one easier.",
-  "You're building something cool.",
-  "Consistency beats intensity.",
-  "Good code tells a story.",
-  "Ship it, then improve it.",
+  "You're building something solid.",
+  "Ship it, then iterate. That's the way.",
   "The best code is the code you don't write.",
+  "Nice work so far.",
 ];
 
 const TIPS: string[] = [
-  "Tip: Run `git diff --staged` before committing to review your changes.",
-  "Tip: Use `/tasks` to see what's been tracked in our conversation.",
-  "Tip: I can run multiple tools in parallel — just ask me to investigate several things at once.",
-  "Tip: Use `/config verbosity minimal` for shorter responses.",
-  "Tip: Type `/context` to see what I know about this project.",
-  "Tip: Ask me to 'review my changes' for a quick code review.",
-  "Tip: I remember our conversations — use `/history` to browse past sessions.",
-  "Tip: Try '/config proactivity active' to get more suggestions from me.",
-  "Tip: I can read multiple files at once — just list the paths.",
-  "Tip: Use `/tasks` to see open action items from our conversation.",
+  "Heads up — I can run multiple things in parallel. Just ask me to check a few files at once.",
+  "If you want shorter responses, try `/config verbosity minimal`.",
+  "Ask me to review your changes before committing — I'll catch things.",
+  "I remember past conversations — `/history` to browse them.",
+  "I can read several files at once. Just list the paths.",
+  "Use `/tasks` to see what we've talked about doing.",
+  "Want me to be more proactive? Try `/config proactivity active`.",
+  "I know your project structure — `/context` shows what I've picked up.",
+  "Try asking me to explain a file you haven't looked at in a while.",
 ];
 
 const OBSERVATIONS: string[] = [
-  "The codebase is looking cleaner.",
-  "Good structure makes everything easier.",
-  "Tests are your safety net.",
-  "TypeScript catches bugs before they happen.",
-  "Monorepos reward good organization.",
-  "Good commit messages help future you.",
-  "Documentation is never wasted effort.",
-  "Refactoring is an investment, not a cost.",
+  "Good structure makes everything easier to maintain.",
+  "Tests catch bugs before they reach production.",
+  "TypeScript saves you from a lot of headaches.",
+  "Good commit messages are a gift to future you.",
+  "Documentation is never a waste of time.",
+  "Refactoring now saves debugging later.",
+  "Clean code is easier to change — and you'll be changing it.",
 ];
 
 const QUESTIONS: string[] = [
-  "Need help with anything?",
-  "Want me to review anything?",
-  "Any tests you want me to run?",
-  "Should we check git status?",
-  "Anything to commit?",
+  "Anything I can help with?",
+  "Want me to review your changes?",
+  "Any tests you'd like me to run?",
+  "Should we check on the git status?",
+  "Got something you want me to look at?",
+  "Want me to explain anything in the codebase?",
+  "Need a hand with anything?",
 ];
 
 const ALL_POOLS = [
@@ -91,6 +89,6 @@ export function getIdleActivity(): IdleActivity {
 }
 
 export function getIdleIntervalMs(): number {
-  // Random interval between 45-90 seconds
-  return 45_000 + Math.floor(Math.random() * 45_000);
+  // Random interval between 60-120 seconds (longer to be less intrusive)
+  return 60_000 + Math.floor(Math.random() * 60_000);
 }

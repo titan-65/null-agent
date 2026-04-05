@@ -31,18 +31,18 @@ export function generateGreeting(options: GreetingOptions): string {
     if (daysAgo === 0) {
       parts.push("Welcome back!");
     } else if (daysAgo === 1) {
-      parts.push("Welcome back! We worked on this yesterday.");
+      parts.push("Welcome back! Good to see you again.");
     } else if (daysAgo < 7) {
       parts.push(`Welcome back! It's been ${daysAgo} days.`);
     } else {
-      parts.push(`Welcome back! It's been a while.`);
+      parts.push("Welcome back! It's been a while.");
     }
   } else {
     parts.push(timeGreeting);
   }
 
   // Project context
-  parts.push(`Working in ${options.projectName}`);
+  parts.push(`I'm looking at ${options.projectName}`);
 
   if (options.gitBranch) {
     parts.push(`on ${options.gitBranch}`);
@@ -51,7 +51,7 @@ export function generateGreeting(options: GreetingOptions): string {
   // Change awareness
   if (options.hasChanges && options.changeCount) {
     if (options.changeCount > 5) {
-      parts.push(`— ${options.changeCount} files changed, quite the session!`);
+      parts.push(`— looks like you've been busy, ${options.changeCount} files changed!`);
     } else if (options.changeCount > 0) {
       parts.push(`— ${options.changeCount} file(s) modified`);
     }
@@ -59,9 +59,9 @@ export function generateGreeting(options: GreetingOptions): string {
 
   // Proactive nudge
   if (options.hasChanges) {
-    parts.push("Want me to review your changes?");
+    parts.push("Want me to take a look at the changes?");
   } else {
-    parts.push("How can I help?");
+    parts.push("What can I help with?");
   }
 
   return parts.join(" ");
