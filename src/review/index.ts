@@ -3,6 +3,13 @@ export { analyzeSecurity } from "./security.ts";
 export { analyzePerformance } from "./performance.ts";
 export { analyzeQuality } from "./quality.ts";
 export {
+  type CIConfig,
+  generateGitHubAction,
+  generateGitLabCI,
+  generatePreCommitHook,
+  setupCI,
+} from "./ci.ts";
+export {
   type ReviewCategory,
   type ReviewSeverity,
   type ReviewPlatform,
