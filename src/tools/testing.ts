@@ -7,7 +7,6 @@ import {
   getCoverage,
   benchmark,
   formatBenchmark,
-  generateAITests,
 } from "../testing/index.ts";
 
 export const generateTestTool: ToolDefinition = {
@@ -41,12 +40,12 @@ export const generateTestTool: ToolDefinition = {
     },
     required: ["file"],
   },
-  async execute(params) {
+  async execute(_params) {
     const file = params["file"] as string;
-    const framework = params["framework"] as "vitest" | "jest" | "mocha" | "ava" | undefined;
+    const _framework = params["framework"] as "vitest" | "jest" | "mocha" | "ava" | undefined;
     const includeEdgeCases = params["includeEdgeCases"] as boolean | undefined;
     const includeMocking = params["includeMocking"] as boolean | undefined;
-    const shouldWrite = params["write"] !== false;
+    const _shouldWrite = params["write"] !== false;
 
     try {
       const testFile = await generateTests(file, process.cwd(), {
@@ -74,8 +73,7 @@ export const generateTestTool: ToolDefinition = {
 
 export const runTestTool: ToolDefinition = {
   name: "run_tests",
-  description:
-    "Run tests and return results. Can run all tests or specific files.",
+  description: "Run tests and return results. Can run all tests or specific files.",
   parameters: {
     type: "object",
     properties: {
@@ -86,7 +84,7 @@ export const runTestTool: ToolDefinition = {
       },
     },
   },
-  async execute(params) {
+  async execute(_params) {
     const files = params["files"] as string[] | undefined;
 
     try {
@@ -115,7 +113,7 @@ export const fixTestTool: ToolDefinition = {
       },
     },
   },
-  async execute(params) {
+  async execute(_params) {
     let output = params["output"] as string | undefined;
 
     if (!output) {
@@ -151,8 +149,7 @@ export const fixTestTool: ToolDefinition = {
 
 export const coverageTool: ToolDefinition = {
   name: "test_coverage",
-  description:
-    "Analyze test coverage for the project. Shows line, branch, and function coverage.",
+  description: "Analyze test coverage for the project. Shows line, branch, and function coverage.",
   parameters: {
     type: "object",
     properties: {
@@ -162,7 +159,7 @@ export const coverageTool: ToolDefinition = {
       },
     },
   },
-  async execute(params) {
+  async execute(_params) {
     try {
       const coverage = await getCoverage();
 
@@ -213,7 +210,7 @@ export const benchmarkTool: ToolDefinition = {
     },
     required: ["code"],
   },
-  async execute(params) {
+  async execute(_params) {
     const code = params["code"] as string;
     const iterations = (params["iterations"] as number) ?? 100;
 
@@ -253,10 +250,10 @@ export const aiTestTool: ToolDefinition = {
     },
     required: ["file"],
   },
-  async execute(params) {
+  async execute(_params) {
     const file = params["file"] as string;
-    const framework = params["framework"] as "vitest" | "jest" | "mocha" | "ava" | undefined;
-    const shouldWrite = params["write"] !== false;
+    const _framework = params["framework"] as "vitest" | "jest" | "mocha" | "ava" | undefined;
+    const _shouldWrite = params["write"] !== false;
 
     try {
       // This tool requires an agent instance - it's called via the agent's chat

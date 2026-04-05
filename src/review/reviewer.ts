@@ -9,6 +9,7 @@ import { calculateOverallScore } from "./types.ts";
 import { analyzeSecurity } from "./security.ts";
 import { analyzePerformance } from "./performance.ts";
 import { analyzeQuality } from "./quality.ts";
+import { runTests, analyzeTestFailures } from "../testing/index.ts";
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
 import { readFile } from "node:fs/promises";
@@ -66,6 +67,38 @@ export async function reviewCode(
 
   // Limit comments
   const limitedComments = allComments.slice(0, config.maxComments ?? 50);
+
+  // Run tests and check for failures
+  if (config.categories?.includes("testing") ?? true) {
+    try {
+      const testResults = await runTests(undefined, projectDir);
+      for (const result of testResults) {
+        if (!result.passed) {
+          const analysis = await analyzeTestFailures(result.output);
+          for (const failure of analysis.failures) {
+            limitedComments.push({
+              id: `test-${Date.now()}`,
+              category: "testing",
+              severity: "warning",
+              file: result.file,
+              message: `Test failure: ${failure}`,
+            });
+          }
+          for (const suggestion of analysis.suggestions) {
+            limitedComments.push({
+              id: `test-suggestion-${Date.now()}`,
+              category: "testing",
+              severity: "suggestion",
+              file: result.file,
+              message: `Test fix suggestion: ${suggestion}`,
+            });
+          }
+        }
+      }
+    } catch {
+      // Tests may not be configured, skip
+    }
+  }
 
   // Calculate scores
   const categories = calculateCategoryScores(limitedComments, config.categories ?? []);

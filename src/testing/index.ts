@@ -86,7 +86,7 @@ export async function runTests(
     : "npx vitest run --reporter=verbose 2>&1";
 
   try {
-    const { stdout, stderr } = await execAsync(cmd, {
+    const { stdout, stderr: _stderr } = await execAsync(cmd, {
       cwd: projectDir,
       timeout: 60000,
       maxBuffer: 1024 * 1024,
@@ -149,11 +149,9 @@ export async function analyzeTestFailures(
   };
 }
 
-export async function getCoverage(
-  projectDir: string = process.cwd(),
-): Promise<TestCoverage[]> {
+export async function getCoverage(projectDir: string = process.cwd()): Promise<TestCoverage[]> {
   try {
-    const { stdout } = await execAsync("npx vitest run --coverage --reporter=json 2>&1", {
+    const { stdout: _stdout } = await execAsync("npx vitest run --coverage --reporter=json 2>&1", {
       cwd: projectDir,
       timeout: 60000,
       maxBuffer: 1024 * 1024,
@@ -183,7 +181,9 @@ function analyzeSourceFile(content: string, filePath: string): SourceAnalysis {
   const imports: string[] = [];
 
   // Find exports
-  const exportMatches = content.matchAll(/export\s+(?:default\s+)?(?:function|const|class)\s+(\w+)/g);
+  const exportMatches = content.matchAll(
+    /export\s+(?:default\s+)?(?:function|const|class)\s+(\w+)/g,
+  );
   for (const match of exportMatches) {
     exports.push(match[1]!);
   }
@@ -195,7 +195,10 @@ function analyzeSourceFile(content: string, filePath: string): SourceAnalysis {
   for (const match of funcMatches) {
     functions.push({
       name: match[1]!,
-      params: match[2]!.split(",").map((p) => p.trim()).filter(Boolean),
+      params: match[2]!
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean),
       isAsync: match[0]!.includes("async"),
     });
   }
@@ -207,7 +210,10 @@ function analyzeSourceFile(content: string, filePath: string): SourceAnalysis {
   for (const match of arrowMatches) {
     functions.push({
       name: match[1]!,
-      params: match[2]!.split(",").map((p) => p.trim()).filter(Boolean),
+      params: match[2]!
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean),
       isAsync: match[0]!.includes("async"),
     });
   }
@@ -251,7 +257,9 @@ function generateTestContent(
     lines.push("import { describe, it, expect, jest, beforeEach } from '@jest/globals';");
   }
 
-  lines.push(`import { ${analysis.exports.join(", ")} } from './${basename(analysis.fileName, extname(analysis.fileName))}';`);
+  lines.push(
+    `import { ${analysis.exports.join(", ")} } from './${basename(analysis.fileName, extname(analysis.fileName))}';`,
+  );
   lines.push("");
 
   // Generate tests for each function
@@ -346,7 +354,7 @@ function detectFramework(projectDir: string): "vitest" | "jest" | "mocha" | "ava
   try {
     const pkgPath = join(projectDir, "package.json");
     const pkg = JSON.parse(require("fs").readFileSync(pkgPath, "utf-8"));
-    const allDeps = { ...(pkg.dependencies ?? {}), ...(pkg.devDependencies ?? {}) };
+    const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
 
     if (allDeps["vitest"] || allDeps["vite-plus"]) return "vitest";
     if (allDeps["jest"]) return "jest";

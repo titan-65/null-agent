@@ -12,8 +12,9 @@ export interface CIConfig {
 
 export async function generateGitHubAction(config: CIConfig = {}): Promise<string> {
   const failOnCritical = config.failOnCritical ?? true;
-  const minScore = config.minScore ?? 70;
-  const categories = config.categories?.join(", ") ?? "security, performance, quality, testing, best_practices";
+  const _minScore = config.minScore ?? 70;
+  const categories =
+    config.categories?.join(", ") ?? "security, performance, quality, testing, best_practices";
 
   const action = `name: AI Code Review
 
@@ -45,15 +46,19 @@ jobs:
         env:
           OPENAI_API_KEY: \${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY: \${{ secrets.ANTHROPIC_API_KEY }}
-${failOnCritical ? `
+${
+  failOnCritical
+    ? `
       - name: Check Review Score
         run: |
-          SCORE=\$(cat review-score.json | jq -r '.overallScore')
-          if [ "\$SCORE" -lt ${minScore} ]; then
-            echo "Review score \$SCORE is below minimum ${minScore}"
+          SCORE=$(cat review-score.json | jq -r '.overallScore')
+          if [ "$SCORE" -lt ${minScore} ]; then
+            echo "Review score $SCORE is below minimum ${minScore}"
             exit 1
           fi
-` : ""}
+`
+    : ""
+}
       - name: Upload Review Report
         if: always()
         uses: actions/upload-artifact@v4
@@ -67,7 +72,7 @@ ${failOnCritical ? `
 
 export async function generateGitLabCI(config: CIConfig = {}): Promise<string> {
   const failOnCritical = config.failOnCritical ?? true;
-  const minScore = config.minScore ?? 70;
+  const _minScore = config.minScore ?? 70;
 
   const ci = `stages:
   - review
@@ -79,13 +84,17 @@ ai-code-review:
     - npm install -g null-agent
     - null-agent "Review the changes in this MR using the code_review tool"
   variables:
-    OPENAI_API_KEY: \$OPENAI_API_KEY
+    OPENAI_API_KEY: $OPENAI_API_KEY
   rules:
-    - if: \$CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: \$CI_COMMIT_BRANCH == \$CI_DEFAULT_BRANCH
-${failOnCritical ? `
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+${
+  failOnCritical
+    ? `
   allow_failure: false
-` : ""}
+`
+    : ""
+}
   artifacts:
     when: always
     paths:
@@ -98,7 +107,9 @@ ${failOnCritical ? `
 }
 
 export async function generatePreCommitHook(content?: string): Promise<string> {
-  return content ?? `#!/bin/sh
+  return (
+    content ??
+    `#!/bin/sh
 # null-agent pre-commit hook
 # Run AI code review before committing
 
@@ -111,21 +122,25 @@ if ! command -v null-agent &> /dev/null; then
 fi
 
 # Run review on staged changes
-RESULT=\$(null-agent "Review the staged changes using the code_review tool with scope='staged'" 2>&1)
+RESULT=$(null-agent "Review the staged changes using the code_review tool with scope='staged'" 2>&1)
 
 # Check for critical issues
-if echo "\$RESULT" | grep -q "critical"; then
+if echo "$RESULT" | grep -q "critical"; then
   echo "❌ Critical issues found. Please fix before committing."
-  echo "\$RESULT"
+  echo "$RESULT"
   exit 1
 fi
 
 echo "✅ Code review passed."
 exit 0
-`;
+`
+  );
 }
 
-export async function setupCI(config: CIConfig, projectDir: string = process.cwd()): Promise<string[]> {
+export async function setupCI(
+  config: CIConfig,
+  projectDir: string = process.cwd(),
+): Promise<string[]> {
   const files: string[] = [];
 
   // Generate CI config based on platform
