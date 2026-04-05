@@ -24,6 +24,7 @@ export {
   releasePrepareTool,
   workflowTools,
 } from "./workflow/index.ts";
+export { webSearchTool, webFetchTool } from "./web.ts";
 
 import { fileReadTool } from "./file-read.ts";
 import { fileWriteTool } from "./file-write.ts";
@@ -39,6 +40,7 @@ import {
   benchmarkTool,
   aiTestTool,
 } from "./testing.ts";
+import { webSearchTool, webFetchTool } from "./web.ts";
 import { ToolRegistry } from "./registry.ts";
 import type { ToolDefinition } from "./types.ts";
 
@@ -55,6 +57,8 @@ export const builtinTools: ToolDefinition[] = [
   coverageTool,
   benchmarkTool,
   aiTestTool,
+  webSearchTool,
+  webFetchTool,
 ];
 
 export function createDefaultRegistry(): ToolRegistry {

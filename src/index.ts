@@ -78,6 +78,7 @@ export {
 } from "./testing/index.ts";
 export { generateTestTool, runTestTool, fixTestTool, coverageTool } from "./tools/testing.ts";
 export { builtinTools, createDefaultRegistry } from "./tools/index.ts";
+export { webSearchTool, webFetchTool } from "./tools/web.ts";
 
 // Agent
 export type { AgentCallbacks, AgentConfig, AgentResult } from "./agent/types.ts";
