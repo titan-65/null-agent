@@ -40,3 +40,13 @@ describe("webFetchTool", () => {
     expect(webFetchTool.parameters.properties).toHaveProperty("url");
   });
 });
+
+describe("Tavily API key resolution", () => {
+  it("reads TAVILY_API_KEY from environment variable", async () => {
+    process.env.TAVILY_API_KEY = "test-env-key";
+    const result = await webSearchTool.execute({ query: "test" });
+    // Should not return "not configured" error (will fail with invalid key, but that's fine)
+    expect(result.content).not.toContain("TAVILY_API_KEY not configured");
+    delete process.env.TAVILY_API_KEY;
+  });
+});
