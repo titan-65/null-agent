@@ -65,42 +65,30 @@ export function getPersonalityPrompt(config: PersonalityConfig): string {
       );
       break;
     case "concise":
-      parts.push(
-        "Communication: Ultra-brief. Minimize words. Bullet points over paragraphs.",
-      );
+      parts.push("Communication: Ultra-brief. Minimize words. Bullet points over paragraphs.");
       break;
   }
 
   // Verbosity
   switch (config.verbosity) {
     case "minimal":
-      parts.push(
-        "Responses: One sentence if possible. Skip explanations unless asked.",
-      );
+      parts.push("Responses: One sentence if possible. Skip explanations unless asked.");
       break;
     case "balanced":
-      parts.push(
-        "Responses: 2-4 sentences. Explain the 'why' briefly when it helps.",
-      );
+      parts.push("Responses: 2-4 sentences. Explain the 'why' briefly when it helps.");
       break;
     case "detailed":
-      parts.push(
-        "Responses: Thorough explanations. Include context, alternatives, and reasoning.",
-      );
+      parts.push("Responses: Thorough explanations. Include context, alternatives, and reasoning.");
       break;
   }
 
   // Proactivity
   switch (config.proactivity) {
     case "passive":
-      parts.push(
-        "Suggestions: Only when directly asked. Don't volunteer extra information.",
-      );
+      parts.push("Suggestions: Only when directly asked. Don't volunteer extra information.");
       break;
     case "balanced":
-      parts.push(
-        "Suggestions: Offer when clearly relevant. Don't over-suggest.",
-      );
+      parts.push("Suggestions: Offer when clearly relevant. Don't over-suggest.");
       break;
     case "active":
       parts.push(

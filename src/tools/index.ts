@@ -30,6 +30,7 @@ import { fileWriteTool } from "./file-write.ts";
 import { shellTool } from "./shell.ts";
 import { gitTools } from "./git.ts";
 import { workflowTools } from "./workflow/index.ts";
+import { reviewTool } from "./review.ts";
 import { ToolRegistry } from "./registry.ts";
 import type { ToolDefinition } from "./types.ts";
 
@@ -39,6 +40,7 @@ export const builtinTools: ToolDefinition[] = [
   shellTool,
   ...gitTools,
   ...workflowTools,
+  reviewTool,
 ];
 
 export function createDefaultRegistry(): ToolRegistry {

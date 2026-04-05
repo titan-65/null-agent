@@ -49,6 +49,22 @@ export {
   releasePrepareTool,
   workflowTools,
 } from "./tools/workflow/index.ts";
+export { reviewTool } from "./tools/review.ts";
+export {
+  reviewCode,
+  type ReviewOptions,
+  type ReviewCategory,
+  type ReviewSeverity,
+  type ReviewPlatform,
+  type ReviewDepth,
+  type ReviewComment,
+  type CategoryScore,
+  type ReviewResult,
+  type ReviewConfig,
+  calculateOverallScore,
+  formatReviewReport,
+  DEFAULT_REVIEW_CONFIG,
+} from "./review/index.ts";
 export { builtinTools, createDefaultRegistry } from "./tools/index.ts";
 
 // Agent
