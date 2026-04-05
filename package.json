@@ -29,7 +29,8 @@
     "null-agent": "./dist/cli/index.mjs"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "type": "module",
   "types": "./dist/index.d.mts",
