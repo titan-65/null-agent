@@ -138,9 +138,22 @@ async function main(): Promise<void> {
       const { startRepl } = await import("./repl.ts");
       await startRepl({ provider: providerName, model });
     } else {
-      // TUI mode (default)
-      const { startTui } = await import("../tui/index.tsx");
-      await startTui({ provider: providerName, model });
+      // TUI mode (default) - try to load, fallback to plain REPL
+      try {
+        const { startTui } = await import("../tui/index.tsx");
+        await startTui({ provider: providerName, model });
+      } catch (error) {
+        if (String(error).includes("Cannot find package")) {
+          console.error(
+            "TUI requires 'ink' and 'react'. Falling back to plain REPL.\n",
+          );
+          console.error("Install TUI deps: npm install ink react @inkjs/ui\n");
+          const { startRepl } = await import("./repl.ts");
+          await startRepl({ provider: providerName, model });
+        } else {
+          throw error;
+        }
+      }
     }
   } catch (error) {
     if (error instanceof ProviderError) {
