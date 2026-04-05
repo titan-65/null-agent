@@ -6,8 +6,8 @@
   <img src="https://img.shields.io/badge/node-%3E%3D20.19-brightgreen?style=for-the-badge&logo=node.js" alt="Node" />
   <img src="https://img.shields.io/badge/typescript-6.0-blue?style=for-the-badge&logo=typescript" alt="TypeScript" />
   <img src="https://img.shields.io/badge/tests-38%2F38%20passing-brightgreen?style=for-the-badge" alt="Tests" />
-  <img src="https://img.shields.io/badge/tools-26%20built--in-orange?style=for-the-badge" alt="Tools" />
-  <img src="https://img.shields.io/badge/providers-4%20LLMs-purple?style=for-the-badge" alt="Providers" />
+  <img src="https://img.shields.io/badge/tools-28%20built--in-orange?style=for-the-badge" alt="Tools" />
+  <img src="https://img.shields.io/badge/providers-5%20LLMs-purple?style=for-the-badge" alt="Providers" />
   <img src="https://img.shields.io/badge/build-passing-success?style=for-the-badge&logo=vite" alt="Build" />
 </p>
 
@@ -98,6 +98,7 @@ null-agent supports 4 LLM providers. Auto-detects which provider has a key confi
 | Anthropic    | `ANTHROPIC_API_KEY`  | `claude-sonnet-4-20250514` | —                                |
 | Google Gemini| `GEMINI_API_KEY`     | `gemini-2.0-flash`         | `gemini-2.0-flash` (free tier)   |
 | OpenRouter   | `OPENROUTER_API_KEY` | `google/gemini-2.0-flash`  | `gemini-2.0-flash`, `llama-3.1`  |
+| Tavily       | `TAVILY_API_KEY`     | —                          | 1000 searches/month (free tier)  |
 
 ```ts
 import { createProvider, detectProvider, getAvailableProviders } from "null-agent";
@@ -136,6 +137,7 @@ Get a free OpenRouter key: https://openrouter.ai/keys
 ```bash
 null-agent auth              # Pick a provider, enter key interactively
 null-agent auth openai       # Configure one provider directly
+null-agent auth tavily       # Configure Tavily API key
 null-agent auth status       # Show which providers are configured
 ```
 
@@ -151,6 +153,7 @@ null-agent auth status       # Show which providers are configured
 # Environment variables (session-only)
 export OPENAI_API_KEY='sk-...'
 export GEMINI_API_KEY='...'
+export TAVILY_API_KEY='tvly-...'
 
 # Or use the auth command (persistent)
 null-agent auth openai
@@ -158,7 +161,7 @@ null-agent auth openai
 
 ## Tools
 
-null-agent ships with 26 built-in tools covering file operations, shell execution, git workflows, dev workflows, code review, and testing.
+null-agent ships with 28 built-in tools covering file operations, shell execution, git workflows, dev workflows, code review, testing, and web search.
 
 ### Core Tools
 
@@ -209,6 +212,15 @@ null-agent ships with 26 built-in tools covering file operations, shell executio
 | `coverageTool`    | `test_coverage`   | Analyze test coverage                        |
 | `benchmarkTool`   | `benchmark`       | Performance benchmarking with P95/P99        |
 | `aiTestTool`      | `ai_generate_tests`| AI-powered test generation                  |
+
+### Web Tools
+
+| Tool            | Name         | Description                                  |
+| --------------- | ------------ | -------------------------------------------- |
+| `webSearchTool` | `web_search` | Search the web via Tavily API                |
+| `webFetchTool`  | `web_fetch`  | Fetch URL content as readable text           |
+
+Get a free Tavily API key: https://tavily.com/
 
 ### Using Tools
 
