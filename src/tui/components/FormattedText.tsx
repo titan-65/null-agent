@@ -7,7 +7,7 @@ interface FormattedTextProps {
 
 /**
  * Renders text with basic markdown-like formatting for the terminal.
- * Supports: headers, code blocks, inline code, bold, lists, blockquotes.
+ * Supports: headers, code blocks, inline code, bold, lists, blockquotes, diffs.
  */
 export function FormattedText({ content }: FormattedTextProps) {
   const blocks = parseBlocks(content);
@@ -21,6 +21,7 @@ type Block =
   | { type: "code"; lang: string; content: string }
   | { type: "list"; items: string[] }
   | { type: "blockquote"; content: string }
+  | { type: "diff"; content: string }
   | { type: "empty" };
 
 function parseBlocks(text: string): Block[] {
@@ -49,6 +50,26 @@ function parseBlocks(text: string): Block[] {
       }
       i++; // skip closing ```
       blocks.push({ type: "code", lang, content: codeLines.join("\n") });
+      continue;
+    }
+
+    // Diff block (starts with +/-/@)
+    if (
+      line.match(/^[+-@]/) &&
+      (line.startsWith("+") || line.startsWith("-") || line.startsWith("@@"))
+    ) {
+      const diffLines: string[] = [];
+      while (
+        i < lines.length &&
+        (lines[i]!.startsWith("+") ||
+          lines[i]!.startsWith("-") ||
+          lines[i]!.startsWith("@@") ||
+          lines[i]!.startsWith(" "))
+      ) {
+        diffLines.push(lines[i]!);
+        i++;
+      }
+      blocks.push({ type: "diff", content: diffLines.join("\n") });
       continue;
     }
 
@@ -89,7 +110,7 @@ function parseBlocks(text: string): Block[] {
       continue;
     }
 
-    // Regular text - collect consecutive text lines
+    // Regular text
     const textLines: string[] = [];
     while (
       i < lines.length &&
@@ -98,7 +119,8 @@ function parseBlocks(text: string): Block[] {
       !lines[i]!.match(/^#{1,3}\s/) &&
       !lines[i]!.match(/^[\s]*[-*•]\s+/) &&
       !lines[i]!.match(/^[\s]*\d+\.\s+/) &&
-      !lines[i]!.startsWith(">")
+      !lines[i]!.startsWith(">") &&
+      !lines[i]!.match(/^[+-@]/)
     ) {
       textLines.push(lines[i]!);
       i++;
@@ -116,11 +138,7 @@ function renderBlock(block: Block, key: number) {
 
     case "heading": {
       const color = block.level === 1 ? "blue" : block.level === 2 ? "cyan" : "white";
-      return h(
-        Box,
-        { key, marginTop: block.level === 1 ? 0 : 0, marginBottom: 0 },
-        h(Text, { bold: true, color }, block.content),
-      );
+      return h(Box, { key }, h(Text, { bold: true, color }, block.content));
     }
 
     case "code":
@@ -129,16 +147,34 @@ function renderBlock(block: Block, key: number) {
         {
           key,
           flexDirection: "column",
-          borderStyle: "single",
+          borderStyle: "round",
           borderColor: "gray",
           paddingX: 1,
-          marginTop: 0,
-          marginBottom: 0,
         },
         h(Text, { color: "gray" }, block.lang),
-        ...block.content
-          .split("\n")
-          .map((line, i) => h(Text, { key: i, color: "white" }, `  ${line}`)),
+        ...highlightCode(block.content, block.lang),
+      );
+
+    case "diff":
+      return h(
+        Box,
+        {
+          key,
+          flexDirection: "column",
+          borderStyle: "round",
+          borderColor: "gray",
+          paddingX: 1,
+        },
+        ...block.content.split("\n").map((line, i) => {
+          const color = line.startsWith("+")
+            ? "green"
+            : line.startsWith("-")
+              ? "red"
+              : line.startsWith("@@")
+                ? "cyan"
+                : "white";
+          return h(Text, { key: i, color }, line);
+        }),
       );
 
     case "list":
@@ -169,16 +205,76 @@ function renderBlock(block: Block, key: number) {
 }
 
 /**
- * Format inline markdown: bold, inline code, links.
- * Returns the formatted string (ink Text doesn't support mixed styles per string,
- * so we apply the dominant style).
+ * Basic syntax highlighting for terminal code blocks.
+ */
+function highlightCode(code: string, lang: string) {
+  const lines = code.split("\n");
+
+  return lines.map((line, i) => {
+    const colored = colorizeLine(line, lang);
+    return h(Text, { key: i }, colored);
+  });
+}
+
+function colorizeLine(line: string, lang: string): string {
+  // ANSI color codes
+  const CYAN = "\x1b[36m";
+  const YELLOW = "\x1b[33m";
+  const GREEN = "\x1b[32m";
+  const MAGENTA = "\x1b[35m";
+  const RESET = "\x1b[0m";
+  const GRAY = "\x1b[90m";
+
+  if (lang === "ts" || lang === "typescript" || lang === "js" || lang === "javascript") {
+    // Keywords
+    let result = line
+      .replace(
+        /\b(import|export|from|const|let|var|function|class|interface|type|enum|async|await|return|if|else|for|while|switch|case|break|continue|new|throw|try|catch|finally|extends|implements|typeof|instanceof)\b/g,
+        `${MAGENTA}$1${RESET}`,
+      )
+      // Strings
+      .replace(/(["'`])(?:(?!\1)[^\\]|\\.)*\1/g, `${GREEN}$&${RESET}`)
+      // Comments
+      .replace(/(\/\/.*$)/gm, `${GRAY}$1${RESET}`)
+      // Numbers
+      .replace(/\b(\d+\.?\d*)\b/g, `${YELLOW}$1${RESET}`)
+      // Built-in types
+      .replace(
+        /\b(string|number|boolean|void|null|undefined|any|never|unknown|object|Array|Promise|Map|Set|Error)\b/g,
+        `${CYAN}$1${RESET}`,
+      );
+    return result;
+  }
+
+  if (lang === "bash" || lang === "sh" || lang === "shell") {
+    return line
+      .replace(/^(#.*)$/gm, `${GRAY}$1${RESET}`)
+      .replace(
+        /\b(sudo|cd|ls|mkdir|rm|cp|mv|git|npm|pnpm|yarn|node|npx|cat|echo|export|source)\b/g,
+        `${MAGENTA}$1${RESET}`,
+      )
+      .replace(/(["'])(?:(?!\1)[^\\]|\\.)*\1/g, `${GREEN}$&${RESET}`)
+      .replace(/(--?\w[\w-]*)/g, `${YELLOW}$1${RESET}`);
+  }
+
+  if (lang === "json") {
+    return line
+      .replace(/"[^"]*"\s*:/g, `${CYAN}$&${RESET}`)
+      .replace(/:\s*"[^"]*"/g, (m) => `${GREEN}${m}${RESET}`)
+      .replace(/:\s*(\d+\.?\d*)/g, `${YELLOW}$1${RESET}`)
+      .replace(/:\s*(true|false|null)/g, `${MAGENTA}$1${RESET}`);
+  }
+
+  // Default: no highlighting
+  return line;
+}
+
+/**
+ * Format inline markdown: bold, inline code.
  */
 function formatInline(text: string): string {
-  // Remove bold markers for now (ink limitation)
   let result = text.replace(/\*\*(.+?)\*\*/g, "$1");
-  // Remove italic markers
   result = result.replace(/_(.+?)_/g, "$1");
-  // Keep inline code visible with backticks
   result = result.replace(/`([^`]+)`/g, "[$1]");
   return result;
 }

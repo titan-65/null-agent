@@ -1,6 +1,9 @@
 import type { Message } from "../providers/types.ts";
 import type { AgentCallbacks, AgentConfig, AgentResult } from "./types.ts";
 import { buildMessages, buildSystemPrompt } from "./context.ts";
+import { ContextManager, truncateToolResult } from "../context/window.ts";
+
+const contextManager = new ContextManager();
 
 export async function runAgent(
   config: AgentConfig,
@@ -24,7 +27,13 @@ export async function runAgent(
   while (iterations < maxIterations) {
     iterations++;
 
-    const messages = buildMessages(systemPrompt, currentHistory);
+    let messages = buildMessages(systemPrompt, currentHistory);
+
+    // Apply context window management
+    if (config.model) {
+      messages = contextManager.prepareMessages(messages, config.model);
+    }
+
     const providerTools = config.tools.toProviderTools();
 
     let assistantText = "";
@@ -162,17 +171,5 @@ function formatArgsForHistory(args: string): string {
 }
 
 function formatToolResult(toolName: string, content: string): string {
-  // For large file reads, truncate but indicate size
-  if (toolName === "file_read" && content.length > 3000) {
-    const lines = content.split("\n");
-    const preview = lines.slice(0, 50).join("\n");
-    return `${preview}\n\n[... ${lines.length - 50} more lines (${content.length} chars total)]`;
-  }
-
-  // For shell commands with large output
-  if (toolName === "shell" && content.length > 2000) {
-    return content.slice(0, 2000) + `\n\n[... output truncated (${content.length} chars total)]`;
-  }
-
-  return content;
+  return truncateToolResult(toolName, content);
 }
