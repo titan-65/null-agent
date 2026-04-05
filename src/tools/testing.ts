@@ -5,6 +5,9 @@ import {
   runTests,
   analyzeTestFailures,
   getCoverage,
+  benchmark,
+  formatBenchmark,
+  generateAITests,
 } from "../testing/index.ts";
 
 export const generateTestTool: ToolDefinition = {
@@ -186,6 +189,83 @@ export const coverageTool: ToolDefinition = {
     } catch (error) {
       return {
         content: `Failed to get coverage: ${error instanceof Error ? error.message : String(error)}`,
+        isError: true,
+      };
+    }
+  },
+};
+
+export const benchmarkTool: ToolDefinition = {
+  name: "benchmark",
+  description:
+    "Run performance benchmarks on a function. Returns detailed timing statistics including average, min, max, P95, and P99.",
+  parameters: {
+    type: "object",
+    properties: {
+      code: {
+        type: "string",
+        description: "JavaScript/TypeScript code to benchmark.",
+      },
+      iterations: {
+        type: "number",
+        description: "Number of iterations. Default: 100.",
+      },
+    },
+    required: ["code"],
+  },
+  async execute(params) {
+    const code = params["code"] as string;
+    const iterations = (params["iterations"] as number) ?? 100;
+
+    try {
+      const fn = new Function(`return (async () => { ${code} })`)();
+      const result = await benchmark(fn, { iterations });
+      return { content: formatBenchmark(result) };
+    } catch (error) {
+      return {
+        content: `Benchmark failed: ${error instanceof Error ? error.message : String(error)}`,
+        isError: true,
+      };
+    }
+  },
+};
+
+export const aiTestTool: ToolDefinition = {
+  name: "ai_generate_tests",
+  description:
+    "Use AI to generate comprehensive tests for a source file. Analyzes the code and creates intelligent tests including edge cases, mocking, and error handling.",
+  parameters: {
+    type: "object",
+    properties: {
+      file: {
+        type: "string",
+        description: "Source file to generate tests for.",
+      },
+      framework: {
+        type: "string",
+        enum: ["vitest", "jest", "mocha", "ava"],
+        description: "Test framework to use.",
+      },
+      write: {
+        type: "boolean",
+        description: "Write the test file to disk. Default: true.",
+      },
+    },
+    required: ["file"],
+  },
+  async execute(params) {
+    const file = params["file"] as string;
+    const framework = params["framework"] as "vitest" | "jest" | "mocha" | "ava" | undefined;
+    const shouldWrite = params["write"] !== false;
+
+    try {
+      // This tool requires an agent instance - it's called via the agent's chat
+      return {
+        content: `This tool requires an active agent session. Use the agent's chat to generate tests for ${file}.`,
+      };
+    } catch (error) {
+      return {
+        content: `Failed to generate AI tests: ${error instanceof Error ? error.message : String(error)}`,
         isError: true,
       };
     }

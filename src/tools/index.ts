@@ -31,7 +31,7 @@ import { shellTool } from "./shell.ts";
 import { gitTools } from "./git.ts";
 import { workflowTools } from "./workflow/index.ts";
 import { reviewTool } from "./review.ts";
-import { generateTestTool, runTestTool, fixTestTool, coverageTool } from "./testing.ts";
+import { generateTestTool, runTestTool, fixTestTool, coverageTool, benchmarkTool, aiTestTool } from "./testing.ts";
 import { ToolRegistry } from "./registry.ts";
 import type { ToolDefinition } from "./types.ts";
 
@@ -46,6 +46,8 @@ export const builtinTools: ToolDefinition[] = [
   runTestTool,
   fixTestTool,
   coverageTool,
+  benchmarkTool,
+  aiTestTool,
 ];
 
 export function createDefaultRegistry(): ToolRegistry {

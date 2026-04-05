@@ -358,3 +358,107 @@ function detectFramework(projectDir: string): "vitest" | "jest" | "mocha" | "ava
 
   return "vitest";
 }
+
+export interface BenchmarkResult {
+  name: string;
+  iterations: number;
+  avgTime: number;
+  minTime: number;
+  maxTime: number;
+  p95Time: number;
+  p99Time: number;
+}
+
+export async function benchmark(
+  fn: () => Promise<void> | void,
+  options: { iterations?: number; warmup?: number } = {},
+): Promise<BenchmarkResult> {
+  const iterations = options.iterations ?? 100;
+  const warmup = options.warmup ?? 10;
+
+  // Warmup
+  for (let i = 0; i < warmup; i++) {
+    await fn();
+  }
+
+  // Benchmark
+  const times: number[] = [];
+  for (let i = 0; i < iterations; i++) {
+    const start = performance.now();
+    await fn();
+    const end = performance.now();
+    times.push(end - start);
+  }
+
+  times.sort((a, b) => a - b);
+
+  const avgTime = times.reduce((sum, t) => sum + t, 0) / times.length;
+  const minTime = times[0]!;
+  const maxTime = times[times.length - 1]!;
+  const p95Time = times[Math.floor(iterations * 0.95)]!;
+  const p99Time = times[Math.floor(iterations * 0.99)]!;
+
+  return {
+    name: fn.name || "anonymous",
+    iterations,
+    avgTime,
+    minTime,
+    maxTime,
+    p95Time,
+    p99Time,
+  };
+}
+
+export function formatBenchmark(result: BenchmarkResult): string {
+  return `Benchmark: ${result.name}
+  Iterations: ${result.iterations}
+  Avg: ${result.avgTime.toFixed(2)}ms
+  Min: ${result.minTime.toFixed(2)}ms
+  Max: ${result.maxTime.toFixed(2)}ms
+  P95: ${result.p95Time.toFixed(2)}ms
+  P99: ${result.p99Time.toFixed(2)}ms`;
+}
+
+export async function generateAITests(
+  sourceFile: string,
+  agent: any,
+  projectDir: string = process.cwd(),
+  options: TestGenerationOptions = DEFAULT_OPTIONS,
+): Promise<TestFile> {
+  const content = await readFile(join(projectDir, sourceFile), "utf-8");
+  const framework = options.framework ?? detectFramework(projectDir);
+  const ext = extname(sourceFile);
+  const baseName = basename(sourceFile, ext);
+  const testFile = join(dirname(sourceFile), `${baseName}.test${ext}`);
+
+  const prompt = `Generate comprehensive ${framework} tests for this ${ext} file:
+
+\`\`\`${ext.slice(1)}
+${content}
+\`\`\`
+
+Requirements:
+- Test all exported functions and classes
+- Include edge cases (empty input, null/undefined, boundary values)
+- Test error handling and async behavior
+- Use describe/it blocks with clear descriptions
+- Include mocking for external dependencies
+- Maximum ${options.maxTests ?? 10} test cases
+
+Return ONLY the test code, no explanations.`;
+
+  const result = await agent.chat(prompt);
+
+  // Extract code from the response
+  let testContent = result.content;
+  const codeMatch = testContent.match(/```[\w]*\n([\s\S]*?)```/);
+  if (codeMatch) {
+    testContent = codeMatch[1]!;
+  }
+
+  return {
+    path: testFile,
+    content: testContent,
+    framework,
+  };
+}
