@@ -40,12 +40,12 @@ export const generateTestTool: ToolDefinition = {
     },
     required: ["file"],
   },
-  async execute(_params) {
+  async execute(params) {
     const file = params["file"] as string;
-    const _framework = params["framework"] as "vitest" | "jest" | "mocha" | "ava" | undefined;
+    const framework = params["framework"] as "vitest" | "jest" | "mocha" | "ava" | undefined;
     const includeEdgeCases = params["includeEdgeCases"] as boolean | undefined;
     const includeMocking = params["includeMocking"] as boolean | undefined;
-    const _shouldWrite = params["write"] !== false;
+    const shouldWrite = params["write"] !== false;
 
     try {
       const testFile = await generateTests(file, process.cwd(), {
@@ -84,7 +84,7 @@ export const runTestTool: ToolDefinition = {
       },
     },
   },
-  async execute(_params) {
+  async execute(params) {
     const files = params["files"] as string[] | undefined;
 
     try {
@@ -113,7 +113,7 @@ export const fixTestTool: ToolDefinition = {
       },
     },
   },
-  async execute(_params) {
+  async execute(params) {
     let output = params["output"] as string | undefined;
 
     if (!output) {
@@ -159,7 +159,9 @@ export const coverageTool: ToolDefinition = {
       },
     },
   },
-  async execute(_params) {
+  async execute(params) {
+    const file = params["file"] as string | undefined;
+
     try {
       const coverage = await getCoverage();
 
@@ -210,7 +212,7 @@ export const benchmarkTool: ToolDefinition = {
     },
     required: ["code"],
   },
-  async execute(_params) {
+  async execute(params) {
     const code = params["code"] as string;
     const iterations = (params["iterations"] as number) ?? 100;
 
@@ -250,10 +252,10 @@ export const aiTestTool: ToolDefinition = {
     },
     required: ["file"],
   },
-  async execute(_params) {
+  async execute(params) {
     const file = params["file"] as string;
-    const _framework = params["framework"] as "vitest" | "jest" | "mocha" | "ava" | undefined;
-    const _shouldWrite = params["write"] !== false;
+    const framework = params["framework"] as "vitest" | "jest" | "mocha" | "ava" | undefined;
+    const shouldWrite = params["write"] !== false;
 
     try {
       // This tool requires an agent instance - it's called via the agent's chat

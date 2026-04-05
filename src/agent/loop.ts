@@ -141,6 +141,26 @@ async function executeToolCalls(
     return { name: tc.name, args };
   });
 
+  // Check permissions
+  if (config.permissions) {
+    const denied: string[] = [];
+    for (const { name, args } of parsed) {
+      const check = await config.permissions.check(name, args);
+      if (!check.allowed) {
+        denied.push(name);
+        callbacks?.onToolResult?.(name, `Permission denied for ${name}`, true);
+      }
+    }
+    if (denied.length > 0) {
+      return parsed
+        .filter((p) => !denied.includes(p.name))
+        .map((p) => ({
+          name: p.name,
+          result: { content: `Skipped: permission denied`, isError: false },
+        }));
+    }
+  }
+
   // Notify callbacks about all tool calls starting
   for (const { name, args } of parsed) {
     callbacks?.onToolCall?.(name, args);

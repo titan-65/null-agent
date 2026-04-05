@@ -3,6 +3,7 @@ import type { ToolRegistry } from "../tools/registry.ts";
 import type { MemoryStore } from "../memory/store.ts";
 import type { ProjectKnowledge } from "../context/types.ts";
 import type { PersonalityConfig } from "./personality.ts";
+import type { PermissionManager } from "../permission/index.ts";
 
 export interface AgentConfig {
   provider: Provider;
@@ -16,6 +17,7 @@ export interface AgentConfig {
   projectKnowledge?: ProjectKnowledge;
   personality?: PersonalityConfig;
   enableOrchestrator?: boolean;
+  permissions?: PermissionManager;
 }
 
 export interface AgentResult {

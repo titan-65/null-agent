@@ -1,4 +1,4 @@
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir, readFileSync } from "node:fs";
 import { join, dirname, basename, extname } from "node:path";
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
@@ -353,7 +353,7 @@ function generateTestContent(
 function detectFramework(projectDir: string): "vitest" | "jest" | "mocha" | "ava" {
   try {
     const pkgPath = join(projectDir, "package.json");
-    const pkg = JSON.parse(require("fs").readFileSync(pkgPath, "utf-8"));
+    const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
     const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
 
     if (allDeps["vitest"] || allDeps["vite-plus"]) return "vitest";

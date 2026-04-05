@@ -25,12 +25,17 @@ export interface ReviewOptions {
   config?: Partial<ReviewConfig>;
 }
 
+import { DEFAULT_REVIEW_CONFIG } from "./types.ts";
+
 export async function reviewCode(
   options: ReviewOptions = {},
   projectDir: string = process.cwd(),
 ): Promise<ReviewResult> {
   const startTime = Date.now();
-  const config: ReviewConfig = { ...options.config } as ReviewConfig;
+  const config: ReviewConfig = {
+    ...DEFAULT_REVIEW_CONFIG,
+    ...options.config,
+  };
 
   // Get files to review
   const files = await getFilesToReview(options, projectDir);

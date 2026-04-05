@@ -185,5 +185,11 @@ function getDefaultModel(provider: ProviderName): string {
       return "gpt-4o";
     case "anthropic":
       return "claude-sonnet-4-20250514";
+    case "gemini":
+      return "gemini-2.0-flash";
+    case "openrouter":
+      return "google/gemini-2.0-flash-001";
+    default:
+      return "gpt-4o";
   }
 }

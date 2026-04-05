@@ -1,4 +1,4 @@
-import { watch, type FSWatcher } from "node:fs";
+import { watch, statSync, type FSWatcher } from "node:fs";
 import { join, relative } from "node:path";
 import type { AwarenessEvent } from "./types.ts";
 
@@ -63,7 +63,6 @@ export class FileWatcher {
     if (eventType === "rename") {
       // rename could be create or delete — check if file exists
       try {
-        const { statSync } = require("node:fs");
         statSync(join(this.projectDir, filename));
         type = "file:create";
       } catch {
