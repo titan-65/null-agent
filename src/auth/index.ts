@@ -47,6 +47,13 @@ export const AUTH_PROMPTS: AuthPrompt[] = [
     instructions: "Enter your OpenRouter API key (free models available)",
     getKeyUrl: "https://openrouter.ai/keys",
   },
+  {
+    provider: "tavily",
+    displayName: "Tavily",
+    envKey: "TAVILY_API_KEY",
+    instructions: "Enter your Tavily API key",
+    getKeyUrl: "https://tavily.com/",
+  },
 ];
 
 export async function loadCredentials(): Promise<AuthCredentials> {
