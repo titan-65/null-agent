@@ -1,11 +1,15 @@
 # null-agent
 
-[![npm version](https://img.shields.io/npm/v/null-agent)](https://www.npmjs.com/package/null-agent)
-[![npm downloads](https://img.shields.io/npm/dt/null-agent)](https://www.npmjs.com/package/null-agent)
-[![license](https://img.shields.io/npm/l/null-agent)](./LICENSE)
-[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org/)
-[![dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)](.)
+<p align="center">
+  <img src="https://img.shields.io/badge/version-0.1.0-blue?style=for-the-badge" alt="Version" />
+  <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License" />
+  <img src="https://img.shields.io/badge/node-%3E%3D20.19-brightgreen?style=for-the-badge&logo=node.js" alt="Node" />
+  <img src="https://img.shields.io/badge/typescript-6.0-blue?style=for-the-badge&logo=typescript" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/tests-38%2F38%20passing-brightgreen?style=for-the-badge" alt="Tests" />
+  <img src="https://img.shields.io/badge/tools-26%20built--in-orange?style=for-the-badge" alt="Tools" />
+  <img src="https://img.shields.io/badge/providers-4%20LLMs-purple?style=for-the-badge" alt="Providers" />
+  <img src="https://img.shields.io/badge/build-passing-success?style=for-the-badge&logo=vite" alt="Build" />
+</p>
 
 Interactive coding assistant library with multi-provider LLM support, a rich terminal UI, tool system, conversation memory, project awareness, and multi-agent orchestration.
 
@@ -88,12 +92,12 @@ null-agent --server --port 3737
 
 null-agent supports 4 LLM providers. Auto-detects which provider has a key configured.
 
-| Provider      | Env Variable         | Default Model              | Free Models                     |
-| ------------- | -------------------- | -------------------------- | ------------------------------- |
-| OpenAI        | `OPENAI_API_KEY`     | `gpt-4o`                   | —                               |
-| Anthropic     | `ANTHROPIC_API_KEY`  | `claude-sonnet-4-20250514` | —                               |
-| Google Gemini | `GEMINI_API_KEY`     | `gemini-2.0-flash`         | `gemini-2.0-flash` (free tier)  |
-| OpenRouter    | `OPENROUTER_API_KEY` | `google/gemini-2.0-flash`  | `gemini-2.0-flash`, `llama-3.1` |
+| Provider     | Env Variable         | Default Model              | Free Models                      |
+| ------------ | -------------------- | -------------------------- | -------------------------------- |
+| OpenAI       | `OPENAI_API_KEY`     | `gpt-4o`                   | —                                |
+| Anthropic    | `ANTHROPIC_API_KEY`  | `claude-sonnet-4-20250514` | —                                |
+| Google Gemini| `GEMINI_API_KEY`     | `gemini-2.0-flash`         | `gemini-2.0-flash` (free tier)   |
+| OpenRouter   | `OPENROUTER_API_KEY` | `google/gemini-2.0-flash`  | `gemini-2.0-flash`, `llama-3.1`  |
 
 ```ts
 import { createProvider, detectProvider, getAvailableProviders } from "null-agent";
@@ -154,13 +158,20 @@ null-agent auth openai
 
 ## Tools
 
-null-agent ships with 10 built-in tools covering file operations, shell execution, and git workflows.
+null-agent ships with 26 built-in tools covering file operations, shell execution, git workflows, dev workflows, code review, and testing.
+
+### Core Tools
 
 | Tool            | Name         | Description                                  |
 | --------------- | ------------ | -------------------------------------------- |
 | `fileReadTool`  | `file_read`  | Read file contents                           |
 | `fileWriteTool` | `file_write` | Write file contents (creates parent dirs)    |
 | `shellTool`     | `shell`      | Run shell commands (30s timeout, 1MB buffer) |
+
+### Git Tools
+
+| Tool            | Name         | Description                                  |
+| --------------- | ------------ | -------------------------------------------- |
 | `gitStatusTool` | `git_status` | Git status                                   |
 | `gitDiffTool`   | `git_diff`   | Git diff                                     |
 | `gitLogTool`    | `git_log`    | Git log                                      |
@@ -168,6 +179,36 @@ null-agent ships with 10 built-in tools covering file operations, shell executio
 | `gitAddTool`    | `git_add`    | Git add                                      |
 | `gitCommitTool` | `git_commit` | Git commit                                   |
 | `gitShowTool`   | `git_show`   | Git show                                     |
+
+### Dev Workflow Tools
+
+| Tool              | Name              | Description                                  |
+| ----------------- | ----------------- | -------------------------------------------- |
+| `changelogTool`   | `changelog`       | Generate changelog from commits              |
+| `commitSmartTool` | `commit_smart`    | Smart commit message suggestions             |
+| `prCreateTool`    | `pr_create`       | Create GitHub PRs via `gh` CLI               |
+| `prListTool`      | `pr_list`         | List open PRs                                |
+| `issueCreateTool` | `issue_create`    | Create GitHub issues                         |
+| `issueListTool`   | `issue_list`      | List issues with filters                     |
+| `ciStatusTool`    | `ci_status`       | Check CI/CD status                           |
+| `releasePrepareTool` | `release_prepare` | Prepare releases (version bump, tag)      |
+
+### Code Review Tools
+
+| Tool            | Name         | Description                                  |
+| --------------- | ------------ | -------------------------------------------- |
+| `reviewTool`    | `code_review`| Comprehensive code review (security, perf, quality)|
+
+### Testing Tools
+
+| Tool              | Name              | Description                                  |
+| ----------------- | ----------------- | -------------------------------------------- |
+| `generateTestTool`| `generate_tests`  | Generate unit tests for source files         |
+| `runTestTool`     | `run_tests`       | Run tests with detailed output               |
+| `fixTestTool`     | `fix_tests`       | Analyze test failures, suggest fixes         |
+| `coverageTool`    | `test_coverage`   | Analyze test coverage                        |
+| `benchmarkTool`   | `benchmark`       | Performance benchmarking with P95/P99        |
+| `aiTestTool`      | `ai_generate_tests`| AI-powered test generation                  |
 
 ### Using Tools
 
@@ -236,18 +277,18 @@ null-agent
 
 **Slash Commands:**
 
-| Command               | Description                |
-| --------------------- | -------------------------- |
-| `/help`               | Show keyboard shortcuts    |
-| `/clear`              | Clear conversation history |
-| `/context`            | Show project context       |
-| `/history`            | List past conversations    |
-| `/resume <id>`        | Resume a past conversation |
-| `/tasks`              | Show tracked tasks         |
-| `/done <id>`          | Mark a task complete       |
-| `/config`             | Show personality config    |
-| `/config tone casual` | Change tone setting        |
-| `/exit`               | Exit                       |
+| Command              | Description                  |
+| -------------------- | ---------------------------- |
+| `/help`              | Show keyboard shortcuts      |
+| `/clear`             | Clear conversation history   |
+| `/context`           | Show project context         |
+| `/history`           | List past conversations      |
+| `/resume <id>`       | Resume a past conversation   |
+| `/tasks`             | Show tracked tasks           |
+| `/done <id>`         | Mark a task complete         |
+| `/config`            | Show personality config      |
+| `/config tone casual`| Change tone setting          |
+| `/exit`              | Exit                         |
 
 ### Readline REPL
 
@@ -267,20 +308,20 @@ null-agent --server --port 3737 --host 0.0.0.0
 
 **Endpoints:**
 
-| Method   | Path                    | Description                  |
-| -------- | ----------------------- | ---------------------------- |
-| `POST`   | `/chat`                 | Send a message, get response |
-| `POST`   | `/chat/stream`          | Stream response via SSE      |
-| `GET`    | `/history`              | Get conversation history     |
-| `DELETE` | `/history`              | Clear conversation history   |
-| `GET`    | `/conversations`        | List saved conversations     |
-| `POST`   | `/conversations/resume` | Resume a conversation        |
-| `GET`    | `/tasks`                | List tasks                   |
-| `POST`   | `/tasks`                | Add a task                   |
-| `POST`   | `/tasks/:id/done`       | Complete a task              |
-| `GET`    | `/config`               | Get configuration            |
-| `PATCH`  | `/config`               | Update configuration         |
-| `GET`    | `/health`               | Health check                 |
+| Method   | Path                      | Description                    |
+| -------- | ------------------------- | ------------------------------ |
+| `POST`   | `/chat`                   | Send a message, get response   |
+| `POST`   | `/chat/stream`            | Stream response via SSE        |
+| `GET`    | `/history`                | Get conversation history       |
+| `DELETE` | `/history`                | Clear conversation history     |
+| `GET`    | `/conversations`          | List saved conversations       |
+| `POST`   | `/conversations/resume`   | Resume a conversation          |
+| `GET`    | `/tasks`                  | List tasks                     |
+| `POST`   | `/tasks`                  | Add a task                     |
+| `POST`   | `/tasks/:id/done`         | Complete a task                |
+| `GET`    | `/config`                 | Get configuration              |
+| `PATCH`  | `/config`                 | Update configuration           |
+| `GET`    | `/health`                 | Health check                   |
 
 ### One-Shot CLI
 
@@ -303,7 +344,7 @@ import { loadConfig, saveConfig } from "null-agent";
 
 const config = await loadConfig();
 config.personality = {
-  tone: "casual", // "professional" | "casual" | "concise"
+  tone: "casual",       // "professional" | "casual" | "concise"
   verbosity: "balanced", // "minimal" | "balanced" | "detailed"
   proactivity: "active", // "passive" | "balanced" | "active"
 };
@@ -311,7 +352,6 @@ await saveConfig(config);
 ```
 
 Or via CLI:
-
 ```bash
 null-agent config
 null-agent config tone casual
@@ -375,11 +415,11 @@ null-agent can analyze your project to understand its structure:
 import { scanProject } from "null-agent";
 
 const knowledge = await scanProject("./my-project");
-console.log(knowledge.language); // "typescript"
-console.log(knowledge.framework); // "react"
-console.log(knowledge.packageManager); // "pnpm"
-console.log(knowledge.testCommand); // "vitest"
-console.log(knowledge.conventions); // { typescript: true, testFramework: "vitest" }
+console.log(knowledge.language);        // "typescript"
+console.log(knowledge.framework);       // "react"
+console.log(knowledge.packageManager);  // "pnpm"
+console.log(knowledge.testCommand);     // "vitest"
+console.log(knowledge.conventions);     // { typescript: true, testFramework: "vitest" }
 ```
 
 Detects: Next.js, Nuxt, React, Vue, Express, Fastify, Hono, NestJS, and more.
@@ -401,14 +441,14 @@ awareness.start({
 
 **Events:**
 
-| Event          | Trigger                   |
-| -------------- | ------------------------- |
-| `git:change`   | New staged/modified files |
-| `git:branch`   | Branch switch detected    |
-| `git:conflict` | Merge conflicts found     |
-| `file:create`  | New files created         |
-| `file:modify`  | Files modified            |
-| `file:delete`  | Files deleted             |
+| Event          | Trigger                      |
+| -------------- | ---------------------------- |
+| `git:change`   | New staged/modified files    |
+| `git:branch`   | Branch switch detected       |
+| `git:conflict` | Merge conflicts found        |
+| `file:create`  | New files created            |
+| `file:modify`  | Files modified               |
+| `file:delete`  | Files deleted                |
 
 ## Task Tracking
 
@@ -446,6 +486,44 @@ const result = await agent.chat("Investigate these 3 files in parallel");
 ```
 
 Safety limits: 5 concurrent sub-agents, 3 spawns per turn, 30s timeout per sub-agent.
+
+## Code Review
+
+Comprehensive code review with pattern-based analysis:
+
+```ts
+import { reviewCode, formatReviewReport } from "null-agent";
+
+const result = await reviewCode({ diff: true });
+console.log(formatReviewReport(result));
+```
+
+**Review Categories:**
+- **Security** — SQL injection, XSS, hardcoded secrets, weak crypto
+- **Performance** — N+1 queries, sync ops, missing indexes, chained arrays
+- **Quality** — Long functions, deep nesting, magic numbers, empty catch blocks
+- **Testing** — Missing test files detection
+- **Best Practices** — Error handling, TypeScript typing
+
+**Scoring:** 0-100 per category with weighted overall score.
+
+## Automated Testing
+
+Generate, run, and fix tests automatically:
+
+```ts
+import { generateTests, runTests, analyzeTestFailures, benchmark } from "null-agent";
+
+// Generate tests for a file
+const testFile = await generateTests("./src/auth.ts");
+await writeTestFile(testFile);
+
+// Run tests
+const results = await runTests();
+
+// Benchmark a function
+const result = await benchmark(() => myFunction(), { iterations: 100 });
+```
 
 ## Plugin System
 
@@ -500,7 +578,7 @@ Control what the agent can do:
 import { PermissionManager } from "null-agent";
 
 const permissions = new PermissionManager({
-  mode: "confirm", // "auto" | "confirm" | "plan"
+  mode: "confirm",  // "auto" | "confirm" | "plan"
   allowWrite: true,
   allowShell: true,
   allowGit: true,
@@ -509,23 +587,51 @@ const permissions = new PermissionManager({
 ```
 
 **Modes:**
-
 - `auto` — execute everything
 - `confirm` — ask before destructive operations
 - `plan` — read-only mode
+
+## CI/CD Integration
+
+Generate CI/CD configs for automated code review:
+
+```ts
+import { setupCI, generateGitHubAction, generatePreCommitHook } from "null-agent";
+
+// Setup CI for a project
+await setupCI({
+  platform: "github",
+  reviewOnPR: true,
+  failOnCritical: true,
+  minScore: 70,
+});
+```
+
+## Session Export
+
+Export conversations in multiple formats:
+
+```ts
+import { exportToFile } from "null-agent";
+
+await exportToFile(conversation, {
+  format: "markdown", // or "json", "html"
+  outputPath: "./exports",
+});
+```
 
 ## Architecture
 
 ```
 src/
   providers/       LLM provider abstraction (OpenAI, Anthropic, Gemini, OpenRouter)
-  tools/           Tool system (file, shell, git, spawn)
+  tools/           Tool system (file, shell, git, workflow, review, testing)
   agent/           Agent loop, orchestrator, tasks, suggestions, personality
   cli/             CLI entry point, REPL, output formatting
   tui/             Ink terminal UI (StatusBar, ChatPanel, InputBar, NullFace)
   server/          HTTP API server with SSE streaming
-  memory/          Conversation persistence
-  context/         Project knowledge scanning
+  memory/          Conversation persistence, session export
+  context/         Project knowledge scanning, context window management
   awareness/       Git monitoring, file watching
   bus/             Event bus for decoupled communication
   config/          Unified config system
@@ -533,6 +639,8 @@ src/
   plugin/          Plugin architecture
   command/         Command pattern with undo support
   auth/            API key management
+  review/          Code review system (security, perf, quality, CI)
+  testing/         Test generation, execution, benchmarking
 ```
 
 ## CLI Reference
