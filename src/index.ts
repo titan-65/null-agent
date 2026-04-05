@@ -38,6 +38,17 @@ export {
   gitStatusTool,
   gitTools,
 } from "./tools/git.ts";
+export {
+  changelogTool,
+  commitSmartTool,
+  prCreateTool,
+  prListTool,
+  issueCreateTool,
+  issueListTool,
+  ciStatusTool,
+  releasePrepareTool,
+  workflowTools,
+} from "./tools/workflow/index.ts";
 export { builtinTools, createDefaultRegistry } from "./tools/index.ts";
 
 // Agent

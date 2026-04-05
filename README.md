@@ -81,12 +81,12 @@ null-agent --server --port 3737
 
 null-agent supports 4 LLM providers. Auto-detects which provider has a key configured.
 
-| Provider     | Env Variable         | Default Model              | Free Models                      |
-| ------------ | -------------------- | -------------------------- | -------------------------------- |
-| OpenAI       | `OPENAI_API_KEY`     | `gpt-4o`                   | —                                |
-| Anthropic    | `ANTHROPIC_API_KEY`  | `claude-sonnet-4-20250514` | —                                |
-| Google Gemini| `GEMINI_API_KEY`     | `gemini-2.0-flash`         | `gemini-2.0-flash` (free tier)   |
-| OpenRouter   | `OPENROUTER_API_KEY` | `google/gemini-2.0-flash`  | `gemini-2.0-flash`, `llama-3.1`  |
+| Provider      | Env Variable         | Default Model              | Free Models                     |
+| ------------- | -------------------- | -------------------------- | ------------------------------- |
+| OpenAI        | `OPENAI_API_KEY`     | `gpt-4o`                   | —                               |
+| Anthropic     | `ANTHROPIC_API_KEY`  | `claude-sonnet-4-20250514` | —                               |
+| Google Gemini | `GEMINI_API_KEY`     | `gemini-2.0-flash`         | `gemini-2.0-flash` (free tier)  |
+| OpenRouter    | `OPENROUTER_API_KEY` | `google/gemini-2.0-flash`  | `gemini-2.0-flash`, `llama-3.1` |
 
 ```ts
 import { createProvider, detectProvider, getAvailableProviders } from "null-agent";
@@ -229,18 +229,18 @@ null-agent
 
 **Slash Commands:**
 
-| Command              | Description                  |
-| -------------------- | ---------------------------- |
-| `/help`              | Show keyboard shortcuts      |
-| `/clear`             | Clear conversation history   |
-| `/context`           | Show project context         |
-| `/history`           | List past conversations      |
-| `/resume <id>`       | Resume a past conversation   |
-| `/tasks`             | Show tracked tasks           |
-| `/done <id>`         | Mark a task complete         |
-| `/config`            | Show personality config      |
-| `/config tone casual`| Change tone setting          |
-| `/exit`              | Exit                         |
+| Command               | Description                |
+| --------------------- | -------------------------- |
+| `/help`               | Show keyboard shortcuts    |
+| `/clear`              | Clear conversation history |
+| `/context`            | Show project context       |
+| `/history`            | List past conversations    |
+| `/resume <id>`        | Resume a past conversation |
+| `/tasks`              | Show tracked tasks         |
+| `/done <id>`          | Mark a task complete       |
+| `/config`             | Show personality config    |
+| `/config tone casual` | Change tone setting        |
+| `/exit`               | Exit                       |
 
 ### Readline REPL
 
@@ -260,20 +260,20 @@ null-agent --server --port 3737 --host 0.0.0.0
 
 **Endpoints:**
 
-| Method   | Path                      | Description                    |
-| -------- | ------------------------- | ------------------------------ |
-| `POST`   | `/chat`                   | Send a message, get response   |
-| `POST`   | `/chat/stream`            | Stream response via SSE        |
-| `GET`    | `/history`                | Get conversation history       |
-| `DELETE` | `/history`                | Clear conversation history     |
-| `GET`    | `/conversations`          | List saved conversations       |
-| `POST`   | `/conversations/resume`   | Resume a conversation          |
-| `GET`    | `/tasks`                  | List tasks                     |
-| `POST`   | `/tasks`                  | Add a task                     |
-| `POST`   | `/tasks/:id/done`         | Complete a task                |
-| `GET`    | `/config`                 | Get configuration              |
-| `PATCH`  | `/config`                 | Update configuration           |
-| `GET`    | `/health`                 | Health check                   |
+| Method   | Path                    | Description                  |
+| -------- | ----------------------- | ---------------------------- |
+| `POST`   | `/chat`                 | Send a message, get response |
+| `POST`   | `/chat/stream`          | Stream response via SSE      |
+| `GET`    | `/history`              | Get conversation history     |
+| `DELETE` | `/history`              | Clear conversation history   |
+| `GET`    | `/conversations`        | List saved conversations     |
+| `POST`   | `/conversations/resume` | Resume a conversation        |
+| `GET`    | `/tasks`                | List tasks                   |
+| `POST`   | `/tasks`                | Add a task                   |
+| `POST`   | `/tasks/:id/done`       | Complete a task              |
+| `GET`    | `/config`               | Get configuration            |
+| `PATCH`  | `/config`               | Update configuration         |
+| `GET`    | `/health`               | Health check                 |
 
 ### One-Shot CLI
 
@@ -296,7 +296,7 @@ import { loadConfig, saveConfig } from "null-agent";
 
 const config = await loadConfig();
 config.personality = {
-  tone: "casual",       // "professional" | "casual" | "concise"
+  tone: "casual", // "professional" | "casual" | "concise"
   verbosity: "balanced", // "minimal" | "balanced" | "detailed"
   proactivity: "active", // "passive" | "balanced" | "active"
 };
@@ -304,6 +304,7 @@ await saveConfig(config);
 ```
 
 Or via CLI:
+
 ```bash
 null-agent config
 null-agent config tone casual
@@ -367,11 +368,11 @@ null-agent can analyze your project to understand its structure:
 import { scanProject } from "null-agent";
 
 const knowledge = await scanProject("./my-project");
-console.log(knowledge.language);        // "typescript"
-console.log(knowledge.framework);       // "react"
-console.log(knowledge.packageManager);  // "pnpm"
-console.log(knowledge.testCommand);     // "vitest"
-console.log(knowledge.conventions);     // { typescript: true, testFramework: "vitest" }
+console.log(knowledge.language); // "typescript"
+console.log(knowledge.framework); // "react"
+console.log(knowledge.packageManager); // "pnpm"
+console.log(knowledge.testCommand); // "vitest"
+console.log(knowledge.conventions); // { typescript: true, testFramework: "vitest" }
 ```
 
 Detects: Next.js, Nuxt, React, Vue, Express, Fastify, Hono, NestJS, and more.
@@ -393,14 +394,14 @@ awareness.start({
 
 **Events:**
 
-| Event          | Trigger                      |
-| -------------- | ---------------------------- |
-| `git:change`   | New staged/modified files    |
-| `git:branch`   | Branch switch detected       |
-| `git:conflict` | Merge conflicts found        |
-| `file:create`  | New files created            |
-| `file:modify`  | Files modified               |
-| `file:delete`  | Files deleted                |
+| Event          | Trigger                   |
+| -------------- | ------------------------- |
+| `git:change`   | New staged/modified files |
+| `git:branch`   | Branch switch detected    |
+| `git:conflict` | Merge conflicts found     |
+| `file:create`  | New files created         |
+| `file:modify`  | Files modified            |
+| `file:delete`  | Files deleted             |
 
 ## Task Tracking
 
@@ -492,7 +493,7 @@ Control what the agent can do:
 import { PermissionManager } from "null-agent";
 
 const permissions = new PermissionManager({
-  mode: "confirm",  // "auto" | "confirm" | "plan"
+  mode: "confirm", // "auto" | "confirm" | "plan"
   allowWrite: true,
   allowShell: true,
   allowGit: true,
@@ -501,6 +502,7 @@ const permissions = new PermissionManager({
 ```
 
 **Modes:**
+
 - `auto` — execute everything
 - `confirm` — ask before destructive operations
 - `plan` — read-only mode
