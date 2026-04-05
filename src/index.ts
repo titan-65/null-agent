@@ -65,6 +65,18 @@ export {
   formatReviewReport,
   DEFAULT_REVIEW_CONFIG,
 } from "./review/index.ts";
+export {
+  generateTests,
+  writeTestFile,
+  runTests,
+  analyzeTestFailures,
+  getCoverage,
+  type TestFile,
+  type TestResult,
+  type TestCoverage,
+  type TestGenerationOptions,
+} from "./testing/index.ts";
+export { generateTestTool, runTestTool, fixTestTool, coverageTool } from "./tools/testing.ts";
 export { builtinTools, createDefaultRegistry } from "./tools/index.ts";
 
 // Agent

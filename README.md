@@ -1,5 +1,12 @@
 # null-agent
 
+[![npm version](https://img.shields.io/npm/v/null-agent)](https://www.npmjs.com/package/null-agent)
+[![npm downloads](https://img.shields.io/npm/dt/null-agent)](https://www.npmjs.com/package/null-agent)
+[![license](https://img.shields.io/npm/l/null-agent)](./LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org/)
+[![dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)](.)
+
 Interactive coding assistant library with multi-provider LLM support, a rich terminal UI, tool system, conversation memory, project awareness, and multi-agent orchestration.
 
 Use it as a **library** to build AI-powered developer tools, or run it directly as a **CLI** with four different interfaces.
