@@ -3,8 +3,7 @@ import { runGh, runGit, checkGhAvailable } from "./utils.ts";
 
 export const ciStatusTool: ToolDefinition = {
   name: "ci_status",
-  description:
-    "Check CI/CD status for the current branch. Shows GitHub Actions run status.",
+  description: "Check CI/CD status for the current branch. Shows GitHub Actions run status.",
   parameters: {
     type: "object",
     properties: {
@@ -132,7 +131,11 @@ export const releasePrepareTool: ToolDefinition = {
     // Create tag if requested
     if (shouldTag) {
       const tagCreateResult = await runGit([
-        "tag", "-a", `v${newVersion}`, "-m", `Release v${newVersion}`,
+        "tag",
+        "-a",
+        `v${newVersion}`,
+        "-m",
+        `Release v${newVersion}`,
       ]);
       if (tagCreateResult.isError) {
         return {

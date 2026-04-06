@@ -3,8 +3,7 @@ import { runGh, checkGhAvailable } from "./utils.ts";
 
 export const issueCreateTool: ToolDefinition = {
   name: "issue_create",
-  description:
-    "Create a GitHub Issue. Supports title, body, labels, and assignees.",
+  description: "Create a GitHub Issue. Supports title, body, labels, and assignees.",
   parameters: {
     type: "object",
     properties: {
@@ -63,8 +62,7 @@ export const issueCreateTool: ToolDefinition = {
 
 export const issueListTool: ToolDefinition = {
   name: "issue_list",
-  description:
-    "List GitHub Issues. Filter by state, label, or assignee.",
+  description: "List GitHub Issues. Filter by state, label, or assignee.",
   parameters: {
     type: "object",
     properties: {
@@ -97,9 +95,12 @@ export const issueListTool: ToolDefinition = {
     }
 
     const ghArgs = [
-      "issue", "list",
-      "--state", (params["state"] as string) ?? "open",
-      "--limit", String((params["limit"] as number) ?? 10),
+      "issue",
+      "list",
+      "--state",
+      (params["state"] as string) ?? "open",
+      "--limit",
+      String((params["limit"] as number) ?? 10),
     ];
 
     if (params["label"]) {

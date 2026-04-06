@@ -176,9 +176,7 @@ describe("MemoryStore.searchConversations", () => {
       title: "Implement user authentication",
       createdAt: "2026-01-01T00:00:00Z",
       updatedAt: "2026-01-01T00:00:00Z",
-      messages: [
-        { role: "user", content: "How do I implement user authentication with JWT?" },
-      ],
+      messages: [{ role: "user", content: "How do I implement user authentication with JWT?" }],
       metadata: {
         projectDir: "/test",
         projectName: "test",

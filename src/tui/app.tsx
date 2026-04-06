@@ -376,7 +376,14 @@ export function App({
 
         const memory = (
           agent as unknown as {
-            config: { memory?: { searchConversations(opts: { query: string; limit: number }): Promise<import("../memory/types.ts").ConversationSearchResult[]> } };
+            config: {
+              memory?: {
+                searchConversations(opts: {
+                  query: string;
+                  limit: number;
+                }): Promise<import("../memory/types.ts").ConversationSearchResult[]>;
+              };
+            };
           }
         ).config.memory;
 
@@ -647,7 +654,10 @@ function formatConversationList(convs: ConversationSummary[]): string {
   return lines.join("\n");
 }
 
-function formatSearchResults(query: string, results: import("../memory/types.ts").ConversationSearchResult[]): string {
+function formatSearchResults(
+  query: string,
+  results: import("../memory/types.ts").ConversationSearchResult[],
+): string {
   if (results.length === 0) return `No results found for "${query}".`;
 
   const lines = [`## Search Results for "${query}"`, ""];

@@ -107,7 +107,10 @@ export class MemoryStore {
 
     if (!query.trim()) return [];
 
-    const terms = query.toLowerCase().split(/\s+/).filter((t) => t.length > 1);
+    const terms = query
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((t) => t.length > 1);
     if (terms.length === 0) return [];
 
     try {
@@ -160,9 +163,8 @@ export class MemoryStore {
               }
             }
             if (msgMatches && matches.length < 3) {
-              const snippet = msg.content.length > 80
-                ? msg.content.slice(0, 77) + "..."
-                : msg.content;
+              const snippet =
+                msg.content.length > 80 ? msg.content.slice(0, 77) + "..." : msg.content;
               matches.push(`${msg.role}: "${snippet.replace(/\n/g, " ")}"`);
             }
           }

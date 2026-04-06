@@ -1,3 +1,5 @@
+import { VERSION } from "../version.ts";
+
 const GRAY = "\x1b[90m";
 const GREEN = "\x1b[32m";
 const YELLOW = "\x1b[33m";
@@ -23,7 +25,7 @@ export function printToolResult(name: string, result: string, isError: boolean):
 
 export function printWelcome(provider: string, model: string): void {
   console.log(`
-${BOLD}null-agent${RESET} ${GRAY}v0.0.0${RESET}
+${BOLD}null-agent${RESET} ${GRAY}v${VERSION}${RESET}
 ${GRAY}Provider: ${provider} | Model: ${model}${RESET}
 ${GRAY}Type your message or /exit to quit, /clear to clear history.${RESET}
 `);

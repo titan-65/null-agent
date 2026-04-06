@@ -144,9 +144,7 @@ async function main(): Promise<void> {
         await startTui({ provider: providerName, model });
       } catch (error) {
         if (String(error).includes("Cannot find package")) {
-          console.error(
-            "TUI requires 'ink' and 'react'. Falling back to plain REPL.\n",
-          );
+          console.error("TUI requires 'ink' and 'react'. Falling back to plain REPL.\n");
           console.error("Install TUI deps: npm install ink react @inkjs/ui\n");
           const { startRepl } = await import("./repl.ts");
           await startRepl({ provider: providerName, model });

@@ -130,9 +130,12 @@ export const prListTool: ToolDefinition = {
     }
 
     const ghArgs = [
-      "pr", "list",
-      "--state", (params["state"] as string) ?? "open",
-      "--limit", String((params["limit"] as number) ?? 10),
+      "pr",
+      "list",
+      "--state",
+      (params["state"] as string) ?? "open",
+      "--limit",
+      String((params["limit"] as number) ?? 10),
     ];
 
     if (params["author"]) {

@@ -32,12 +32,7 @@ import { shellTool } from "./shell.ts";
 import { gitTools } from "./git.ts";
 import { workflowTools } from "./workflow/index.ts";
 import { reviewTool } from "./review.ts";
-import {
-  generateTestTool,
-  runTestTool,
-  fixTestTool,
-  coverageTool,
-} from "./testing.ts";
+import { generateTestTool, runTestTool, fixTestTool, coverageTool } from "./testing.ts";
 import { webSearchTool, webFetchTool } from "./web.ts";
 import { ToolRegistry } from "./registry.ts";
 import type { ToolDefinition } from "./types.ts";

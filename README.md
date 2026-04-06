@@ -92,13 +92,13 @@ null-agent --server --port 3737
 
 null-agent supports 4 LLM providers. Auto-detects which provider has a key configured.
 
-| Provider     | Env Variable         | Default Model              | Free Models                      |
-| ------------ | -------------------- | -------------------------- | -------------------------------- |
-| OpenAI       | `OPENAI_API_KEY`     | `gpt-4o`                   | —                                |
-| Anthropic    | `ANTHROPIC_API_KEY`  | `claude-sonnet-4-20250514` | —                                |
-| Google Gemini| `GEMINI_API_KEY`     | `gemini-2.0-flash`         | `gemini-2.0-flash` (free tier)   |
-| OpenRouter   | `OPENROUTER_API_KEY` | `google/gemini-2.0-flash`  | `gemini-2.0-flash`, `llama-3.1`  |
-| Tavily       | `TAVILY_API_KEY`     | —                          | 1000 searches/month (free tier)  |
+| Provider      | Env Variable         | Default Model              | Free Models                     |
+| ------------- | -------------------- | -------------------------- | ------------------------------- |
+| OpenAI        | `OPENAI_API_KEY`     | `gpt-4o`                   | —                               |
+| Anthropic     | `ANTHROPIC_API_KEY`  | `claude-sonnet-4-20250514` | —                               |
+| Google Gemini | `GEMINI_API_KEY`     | `gemini-2.0-flash`         | `gemini-2.0-flash` (free tier)  |
+| OpenRouter    | `OPENROUTER_API_KEY` | `google/gemini-2.0-flash`  | `gemini-2.0-flash`, `llama-3.1` |
+| Tavily        | `TAVILY_API_KEY`     | —                          | 1000 searches/month (free tier) |
 
 ```ts
 import { createProvider, detectProvider, getAvailableProviders } from "null-agent";
@@ -173,52 +173,52 @@ null-agent ships with 28 built-in tools covering file operations, shell executio
 
 ### Git Tools
 
-| Tool            | Name         | Description                                  |
-| --------------- | ------------ | -------------------------------------------- |
-| `gitStatusTool` | `git_status` | Git status                                   |
-| `gitDiffTool`   | `git_diff`   | Git diff                                     |
-| `gitLogTool`    | `git_log`    | Git log                                      |
-| `gitBranchTool` | `git_branch` | Git branches                                 |
-| `gitAddTool`    | `git_add`    | Git add                                      |
-| `gitCommitTool` | `git_commit` | Git commit                                   |
-| `gitShowTool`   | `git_show`   | Git show                                     |
+| Tool            | Name         | Description  |
+| --------------- | ------------ | ------------ |
+| `gitStatusTool` | `git_status` | Git status   |
+| `gitDiffTool`   | `git_diff`   | Git diff     |
+| `gitLogTool`    | `git_log`    | Git log      |
+| `gitBranchTool` | `git_branch` | Git branches |
+| `gitAddTool`    | `git_add`    | Git add      |
+| `gitCommitTool` | `git_commit` | Git commit   |
+| `gitShowTool`   | `git_show`   | Git show     |
 
 ### Dev Workflow Tools
 
-| Tool              | Name              | Description                                  |
-| ----------------- | ----------------- | -------------------------------------------- |
-| `changelogTool`   | `changelog`       | Generate changelog from commits              |
-| `commitSmartTool` | `commit_smart`    | Smart commit message suggestions             |
-| `prCreateTool`    | `pr_create`       | Create GitHub PRs via `gh` CLI               |
-| `prListTool`      | `pr_list`         | List open PRs                                |
-| `issueCreateTool` | `issue_create`    | Create GitHub issues                         |
-| `issueListTool`   | `issue_list`      | List issues with filters                     |
-| `ciStatusTool`    | `ci_status`       | Check CI/CD status                           |
-| `releasePrepareTool` | `release_prepare` | Prepare releases (version bump, tag)      |
+| Tool                 | Name              | Description                          |
+| -------------------- | ----------------- | ------------------------------------ |
+| `changelogTool`      | `changelog`       | Generate changelog from commits      |
+| `commitSmartTool`    | `commit_smart`    | Smart commit message suggestions     |
+| `prCreateTool`       | `pr_create`       | Create GitHub PRs via `gh` CLI       |
+| `prListTool`         | `pr_list`         | List open PRs                        |
+| `issueCreateTool`    | `issue_create`    | Create GitHub issues                 |
+| `issueListTool`      | `issue_list`      | List issues with filters             |
+| `ciStatusTool`       | `ci_status`       | Check CI/CD status                   |
+| `releasePrepareTool` | `release_prepare` | Prepare releases (version bump, tag) |
 
 ### Code Review Tools
 
-| Tool            | Name         | Description                                  |
-| --------------- | ------------ | -------------------------------------------- |
-| `reviewTool`    | `code_review`| Comprehensive code review (security, perf, quality)|
+| Tool         | Name          | Description                                         |
+| ------------ | ------------- | --------------------------------------------------- |
+| `reviewTool` | `code_review` | Comprehensive code review (security, perf, quality) |
 
 ### Testing Tools
 
-| Tool              | Name              | Description                                  |
-| ----------------- | ----------------- | -------------------------------------------- |
-| `generateTestTool`| `generate_tests`  | Generate unit tests for source files         |
-| `runTestTool`     | `run_tests`       | Run tests with detailed output               |
-| `fixTestTool`     | `fix_tests`       | Analyze test failures, suggest fixes         |
-| `coverageTool`    | `test_coverage`   | Analyze test coverage                        |
-| `benchmarkTool`   | `benchmark`       | Performance benchmarking with P95/P99        |
-| `aiTestTool`      | `ai_generate_tests`| AI-powered test generation                  |
+| Tool               | Name                | Description                           |
+| ------------------ | ------------------- | ------------------------------------- |
+| `generateTestTool` | `generate_tests`    | Generate unit tests for source files  |
+| `runTestTool`      | `run_tests`         | Run tests with detailed output        |
+| `fixTestTool`      | `fix_tests`         | Analyze test failures, suggest fixes  |
+| `coverageTool`     | `test_coverage`     | Analyze test coverage                 |
+| `benchmarkTool`    | `benchmark`         | Performance benchmarking with P95/P99 |
+| `aiTestTool`       | `ai_generate_tests` | AI-powered test generation            |
 
 ### Web Tools
 
-| Tool            | Name         | Description                                  |
-| --------------- | ------------ | -------------------------------------------- |
-| `webSearchTool` | `web_search` | Search the web via Tavily API                |
-| `webFetchTool`  | `web_fetch`  | Fetch URL content as readable text           |
+| Tool            | Name         | Description                        |
+| --------------- | ------------ | ---------------------------------- |
+| `webSearchTool` | `web_search` | Search the web via Tavily API      |
+| `webFetchTool`  | `web_fetch`  | Fetch URL content as readable text |
 
 Get a free Tavily API key: https://tavily.com/
 
@@ -289,19 +289,19 @@ null-agent
 
 **Slash Commands:**
 
-| Command              | Description                  |
-| -------------------- | ---------------------------- |
-| `/help`              | Show keyboard shortcuts      |
-| `/clear`             | Clear conversation history   |
-| `/context`           | Show project context         |
-| `/history`           | List past conversations      |
-| `/search <query>`    | Search past conversations    |
-| `/resume <id>`       | Resume a past conversation   |
-| `/tasks`             | Show tracked tasks           |
-| `/done <id>`         | Mark a task complete         |
-| `/config`            | Show personality config      |
-| `/config tone casual`| Change tone setting          |
-| `/exit`              | Exit                         |
+| Command               | Description                |
+| --------------------- | -------------------------- |
+| `/help`               | Show keyboard shortcuts    |
+| `/clear`              | Clear conversation history |
+| `/context`            | Show project context       |
+| `/history`            | List past conversations    |
+| `/search <query>`     | Search past conversations  |
+| `/resume <id>`        | Resume a past conversation |
+| `/tasks`              | Show tracked tasks         |
+| `/done <id>`          | Mark a task complete       |
+| `/config`             | Show personality config    |
+| `/config tone casual` | Change tone setting        |
+| `/exit`               | Exit                       |
 
 ### Readline REPL
 
@@ -321,21 +321,21 @@ null-agent --server --port 3737 --host 0.0.0.0
 
 **Endpoints:**
 
-| Method   | Path                      | Description                    |
-| -------- | ------------------------- | ------------------------------ |
-| `POST`   | `/chat`                   | Send a message, get response   |
-| `POST`   | `/chat/stream`            | Stream response via SSE        |
-| `GET`    | `/history`                | Get conversation history       |
-| `DELETE` | `/history`                | Clear conversation history     |
-| `GET`    | `/conversations`          | List saved conversations       |
-| `GET`    | `/conversations/search`   | Search conversations by query  |
-| `POST`   | `/conversations/resume`   | Resume a conversation          |
-| `GET`    | `/tasks`                  | List tasks                     |
-| `POST`   | `/tasks`                  | Add a task                     |
-| `POST`   | `/tasks/:id/done`         | Complete a task                |
-| `GET`    | `/config`                 | Get configuration              |
-| `PATCH`  | `/config`                 | Update configuration           |
-| `GET`    | `/health`                 | Health check                   |
+| Method   | Path                    | Description                   |
+| -------- | ----------------------- | ----------------------------- |
+| `POST`   | `/chat`                 | Send a message, get response  |
+| `POST`   | `/chat/stream`          | Stream response via SSE       |
+| `GET`    | `/history`              | Get conversation history      |
+| `DELETE` | `/history`              | Clear conversation history    |
+| `GET`    | `/conversations`        | List saved conversations      |
+| `GET`    | `/conversations/search` | Search conversations by query |
+| `POST`   | `/conversations/resume` | Resume a conversation         |
+| `GET`    | `/tasks`                | List tasks                    |
+| `POST`   | `/tasks`                | Add a task                    |
+| `POST`   | `/tasks/:id/done`       | Complete a task               |
+| `GET`    | `/config`               | Get configuration             |
+| `PATCH`  | `/config`               | Update configuration          |
+| `GET`    | `/health`               | Health check                  |
 
 ### One-Shot CLI
 
@@ -358,7 +358,7 @@ import { loadConfig, saveConfig } from "null-agent";
 
 const config = await loadConfig();
 config.personality = {
-  tone: "casual",       // "professional" | "casual" | "concise"
+  tone: "casual", // "professional" | "casual" | "concise"
   verbosity: "balanced", // "minimal" | "balanced" | "detailed"
   proactivity: "active", // "passive" | "balanced" | "active"
 };
@@ -366,6 +366,7 @@ await saveConfig(config);
 ```
 
 Or via CLI:
+
 ```bash
 null-agent config
 null-agent config tone casual
@@ -429,11 +430,11 @@ null-agent can analyze your project to understand its structure:
 import { scanProject } from "null-agent";
 
 const knowledge = await scanProject("./my-project");
-console.log(knowledge.language);        // "typescript"
-console.log(knowledge.framework);       // "react"
-console.log(knowledge.packageManager);  // "pnpm"
-console.log(knowledge.testCommand);     // "vitest"
-console.log(knowledge.conventions);     // { typescript: true, testFramework: "vitest" }
+console.log(knowledge.language); // "typescript"
+console.log(knowledge.framework); // "react"
+console.log(knowledge.packageManager); // "pnpm"
+console.log(knowledge.testCommand); // "vitest"
+console.log(knowledge.conventions); // { typescript: true, testFramework: "vitest" }
 ```
 
 Detects: Next.js, Nuxt, React, Vue, Express, Fastify, Hono, NestJS, and more.
@@ -455,14 +456,14 @@ awareness.start({
 
 **Events:**
 
-| Event          | Trigger                      |
-| -------------- | ---------------------------- |
-| `git:change`   | New staged/modified files    |
-| `git:branch`   | Branch switch detected       |
-| `git:conflict` | Merge conflicts found        |
-| `file:create`  | New files created            |
-| `file:modify`  | Files modified               |
-| `file:delete`  | Files deleted                |
+| Event          | Trigger                   |
+| -------------- | ------------------------- |
+| `git:change`   | New staged/modified files |
+| `git:branch`   | Branch switch detected    |
+| `git:conflict` | Merge conflicts found     |
+| `file:create`  | New files created         |
+| `file:modify`  | Files modified            |
+| `file:delete`  | Files deleted             |
 
 ## Task Tracking
 
@@ -513,6 +514,7 @@ console.log(formatReviewReport(result));
 ```
 
 **Review Categories:**
+
 - **Security** — SQL injection, XSS, hardcoded secrets, weak crypto
 - **Performance** — N+1 queries, sync ops, missing indexes, chained arrays
 - **Quality** — Long functions, deep nesting, magic numbers, empty catch blocks
@@ -592,7 +594,7 @@ Control what the agent can do:
 import { PermissionManager } from "null-agent";
 
 const permissions = new PermissionManager({
-  mode: "confirm",  // "auto" | "confirm" | "plan"
+  mode: "confirm", // "auto" | "confirm" | "plan"
   allowWrite: true,
   allowShell: true,
   allowGit: true,
@@ -601,6 +603,7 @@ const permissions = new PermissionManager({
 ```
 
 **Modes:**
+
 - `auto` — execute everything
 - `confirm` — ask before destructive operations
 - `plan` — read-only mode

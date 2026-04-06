@@ -11,6 +11,7 @@ import type { MemoryStore } from "../memory/store.ts";
 import type { NullAgentConfig } from "../agent/personality.ts";
 import { formatTaskList } from "../agent/tasks.ts";
 import { saveConfig } from "../agent/personality.ts";
+import { VERSION } from "../version.ts";
 
 export interface RouteContext {
   agent: Agent;
@@ -24,7 +25,7 @@ export function registerRoutes(app: any, ctx: RouteContext): void {
   // Health
   router.get("/health", () => ({
     status: "ok",
-    version: "0.0.0",
+    version: VERSION,
   }));
 
   // Chat

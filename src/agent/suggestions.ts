@@ -96,7 +96,9 @@ export function getHighestPrioritySuggestion(suggestions: Suggestion[]): Suggest
   if (suggestions.length === 0) return null;
 
   const priorityOrder = { high: 0, medium: 1, low: 2 };
-  suggestions.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+  const sorted = [...suggestions].sort(
+    (a, b) => priorityOrder[a.priority] - priorityOrder[b.priority],
+  );
 
-  return suggestions[0] ?? null;
+  return sorted[0] ?? null;
 }

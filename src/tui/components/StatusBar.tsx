@@ -1,6 +1,7 @@
 import { createElement as h, memo } from "react";
 import { Box, Text } from "ink";
 import type { ProjectContext } from "../context.ts";
+import { VERSION } from "../../version.ts";
 
 interface StatusBarProps {
   provider: string;
@@ -31,7 +32,7 @@ export const StatusBar = memo(function StatusBar({
       Box,
       { gap: 2 },
       h(Text, { bold: true, color: "blue" }, "null-agent"),
-      h(Text, { color: "gray" }, "v0.0.0"),
+      h(Text, { color: "gray" }, `v${VERSION}`),
       project
         ? h(
             Box,

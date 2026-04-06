@@ -31,8 +31,7 @@ async function runGit(
 
 export const gitStatusTool: ToolDefinition = {
   name: "git_status",
-  description:
-    "Show the working tree status. Shows staged, unstaged, and untracked files.",
+  description: "Show the working tree status. Shows staged, unstaged, and untracked files.",
   parameters: {
     type: "object",
     properties: {},
@@ -73,8 +72,7 @@ export const gitDiffTool: ToolDefinition = {
 
 export const gitLogTool: ToolDefinition = {
   name: "git_log",
-  description:
-    "Show commit history. Use 'count' to limit the number of commits shown.",
+  description: "Show commit history. Use 'count' to limit the number of commits shown.",
   parameters: {
     type: "object",
     properties: {
@@ -173,15 +171,13 @@ export const gitCommitTool: ToolDefinition = {
 
 export const gitShowTool: ToolDefinition = {
   name: "git_show",
-  description:
-    "Show details of a specific commit or the latest commit.",
+  description: "Show details of a specific commit or the latest commit.",
   parameters: {
     type: "object",
     properties: {
       ref: {
         type: "string",
-        description:
-          "The commit ref to show (e.g., 'HEAD', 'abc123'). Default: HEAD.",
+        description: "The commit ref to show (e.g., 'HEAD', 'abc123'). Default: HEAD.",
       },
     },
   },
