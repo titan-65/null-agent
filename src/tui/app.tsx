@@ -359,6 +359,43 @@ export function App({
         return;
       }
 
+      if (trimmed.startsWith("/search ")) {
+        const query = trimmed.slice(8).trim();
+        if (!query) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "system",
+              content: "Usage: /search <query> — Search past conversations",
+              toolCalls: [],
+              isStreaming: false,
+            },
+          ]);
+          return;
+        }
+
+        const memory = (
+          agent as unknown as {
+            config: { memory?: { searchConversations(opts: { query: string; limit: number }): Promise<import("../memory/types.ts").ConversationSearchResult[]> } };
+          }
+        ).config.memory;
+
+        if (memory) {
+          const results = await memory.searchConversations({ query, limit: 5 });
+          const searchText = formatSearchResults(query, results);
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "system",
+              content: searchText,
+              toolCalls: [],
+              isStreaming: false,
+            },
+          ]);
+        }
+        return;
+      }
+
       if (trimmed === "/config") {
         if (config) {
           setMessages((prev) => [
@@ -607,6 +644,26 @@ function formatConversationList(convs: ConversationSummary[]): string {
   lines.push("");
   lines.push("Use /resume <id> to continue a conversation");
 
+  return lines.join("\n");
+}
+
+function formatSearchResults(query: string, results: import("../memory/types.ts").ConversationSearchResult[]): string {
+  if (results.length === 0) return `No results found for "${query}".`;
+
+  const lines = [`## Search Results for "${query}"`, ""];
+
+  for (const result of results) {
+    const date = new Date(result.updatedAt).toLocaleDateString();
+    lines.push(`### ${result.title}`);
+    lines.push(`ID: ${result.id} · ${date} · ${result.messageCount} messages`);
+
+    for (const match of result.matches.slice(0, 2)) {
+      lines.push(`  ${match}`);
+    }
+    lines.push("");
+  }
+
+  lines.push("Use /resume <id> to continue a conversation");
   return lines.join("\n");
 }
 
