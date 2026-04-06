@@ -1,15 +1,31 @@
 import type { Message } from "../providers/types.ts";
-import type { AgentCallbacks, AgentConfig, AgentResult } from "./types.ts";
+import type { AgentConfig, AgentResult, AgentCallbacks } from "./types.ts";
 import { buildMessages, buildSystemPrompt } from "./context.ts";
 import { ContextManager, truncateToolResult } from "../context/window.ts";
+import { AgentEventEmitter, createAgentEvent } from "./events.ts";
 
 const contextManager = new ContextManager();
+
+export interface ToolHookContext {
+  toolCallId: string;
+  name: string;
+  arguments: Record<string, unknown>;
+}
+
+export interface ToolHookConfig {
+  beforeToolCall?: (context: ToolHookContext) => Promise<boolean | void>;
+  afterToolCall?: (
+    context: ToolHookContext & { result: { content: string; isError?: boolean } },
+  ) => Promise<void>;
+}
 
 export async function runAgent(
   config: AgentConfig,
   userMessage: string,
   history: Message[],
   callbacks?: AgentCallbacks,
+  toolHooks?: ToolHookConfig,
+  eventEmitter?: AgentEventEmitter,
 ): Promise<AgentResult> {
   const maxIterations = config.maxIterations ?? 10;
   const systemPrompt = buildSystemPrompt({
@@ -24,12 +40,15 @@ export async function runAgent(
 
   const currentHistory: Message[] = [...history, { role: "user", content: userMessage }];
 
+  await eventEmitter?.emit(createAgentEvent("agent_start", { message: userMessage }));
+
   while (iterations < maxIterations) {
     iterations++;
 
+    await eventEmitter?.emit(createAgentEvent("turn_start", { turn: iterations }));
+
     let messages = buildMessages(systemPrompt, currentHistory);
 
-    // Apply context window management
     if (config.model) {
       messages = contextManager.prepareMessages(messages, config.model);
     }
@@ -43,6 +62,8 @@ export async function runAgent(
       arguments: string;
     }> = [];
 
+    await eventEmitter?.emit(createAgentEvent("message_start", { role: "assistant" }));
+
     for await (const chunk of config.provider.chat(messages, {
       model: config.model,
       temperature: config.temperature,
@@ -53,6 +74,9 @@ export async function runAgent(
       if (chunk.type === "text" && chunk.text) {
         assistantText += chunk.text;
         callbacks?.onText?.(chunk.text);
+        await eventEmitter?.emit(
+          createAgentEvent("message_update", { content: assistantText, delta: chunk.text }),
+        );
       }
 
       if (chunk.type === "tool_call" && chunk.toolCall) {
@@ -60,20 +84,25 @@ export async function runAgent(
       }
     }
 
-    // No tool calls — we have a final text response
+    await eventEmitter?.emit(createAgentEvent("message_end", { content: assistantText }));
+
     if (pendingToolCalls.length === 0) {
       fullResponse = assistantText;
       currentHistory.push({ role: "assistant", content: assistantText });
       break;
     }
 
-    // Aggregate tool calls by ID
     const aggregatedCalls = aggregateToolCalls(pendingToolCalls);
 
-    // Execute tool calls in parallel when possible
-    const results = await executeToolCalls(aggregatedCalls, config, callbacks, toolCalls);
+    const results = await executeToolCalls(
+      aggregatedCalls,
+      config,
+      callbacks,
+      toolCalls,
+      toolHooks,
+      eventEmitter,
+    );
 
-    // Build the assistant message with tool calls
     const toolCallDescriptions = aggregatedCalls
       .map((tc) => `Called ${tc.name}(${formatArgsForHistory(tc.arguments)})`)
       .join("\n");
@@ -84,7 +113,6 @@ export async function runAgent(
 
     currentHistory.push({ role: "assistant", content: assistantMessage });
 
-    // Add tool results as messages
     for (const { name, result } of results) {
       const formattedResult = formatToolResult(name, result.content);
       currentHistory.push({
@@ -93,11 +121,18 @@ export async function runAgent(
       });
     }
 
-    // If we've hit max iterations
     if (iterations >= maxIterations) {
       fullResponse = assistantText || "Max iterations reached.";
     }
   }
+
+  await eventEmitter?.emit(
+    createAgentEvent("agent_end", {
+      content: fullResponse,
+      iterations,
+      toolCalls,
+    }),
+  );
 
   return {
     content: fullResponse,
@@ -129,19 +164,17 @@ async function executeToolCalls(
   config: AgentConfig,
   callbacks: AgentCallbacks | undefined,
   toolCalls: AgentResult["toolCalls"],
+  toolHooks: ToolHookConfig | undefined,
+  eventEmitter: AgentEventEmitter | undefined,
 ): Promise<Array<{ name: string; result: { content: string; isError?: boolean } }>> {
-  // Parse all arguments first
   const parsed = calls.map((tc) => {
     let args: Record<string, unknown> = {};
     try {
       args = JSON.parse(tc.arguments) as Record<string, unknown>;
-    } catch {
-      // Invalid JSON
-    }
+    } catch {}
     return { name: tc.name, args };
   });
 
-  // Check permissions
   if (config.permissions) {
     const denied: string[] = [];
     for (const { name, args } of parsed) {
@@ -161,22 +194,79 @@ async function executeToolCalls(
     }
   }
 
-  // Notify callbacks about all tool calls starting
   for (const { name, args } of parsed) {
+    const toolCallId = `tool_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     callbacks?.onToolCall?.(name, args);
     toolCalls.push({ name, arguments: args });
+
+    await eventEmitter?.emit(
+      createAgentEvent("tool_execution_start", {
+        toolCallId,
+        name,
+        arguments: args,
+      }),
+    );
+
+    const beforeResult = await toolHooks?.beforeToolCall?.({
+      toolCallId,
+      name,
+      arguments: args,
+    });
+
+    if (beforeResult === false) {
+      const blockedResult = {
+        content: "Tool execution blocked by beforeToolCall hook",
+        isError: true,
+      };
+      await eventEmitter?.emit(
+        createAgentEvent("tool_execution_end", {
+          toolCallId,
+          name,
+          result: blockedResult.content,
+          isError: true,
+        }),
+      );
+      await toolHooks?.afterToolCall?.({
+        toolCallId,
+        name,
+        arguments: args,
+        result: blockedResult,
+      });
+      return [{ name, result: blockedResult }];
+    }
+
+    const result = await config.tools.execute(name, args);
+    callbacks?.onToolResult?.(name, result.content, result.isError ?? false);
+
+    await eventEmitter?.emit(
+      createAgentEvent("tool_execution_end", {
+        toolCallId,
+        name,
+        result: result.content,
+        isError: result.isError ?? false,
+      }),
+    );
+
+    await eventEmitter?.emit(
+      createAgentEvent("tool_result", {
+        name,
+        result: result.content,
+        isError: result.isError ?? false,
+      }),
+    );
+
+    await toolHooks?.afterToolCall?.({
+      toolCallId,
+      name,
+      arguments: args,
+      result,
+    });
   }
 
-  // Execute all tool calls in parallel
-  const results = await Promise.all(
-    parsed.map(async ({ name, args }) => {
-      const result = await config.tools.execute(name, args);
-      callbacks?.onToolResult?.(name, result.content, result.isError ?? false);
-      return { name, result };
-    }),
-  );
-
-  return results;
+  return parsed.map(({ name, args }) => ({
+    name,
+    result: { content: "", isError: false },
+  }));
 }
 
 function formatArgsForHistory(args: string): string {

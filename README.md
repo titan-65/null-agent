@@ -54,7 +54,7 @@ null-agent auth openai
 null-agent auth status
 ```
 
-Keys are stored in `~/.null-agent/credentials.json` and loaded automatically on startup.
+Keys are stored securely in the OS keychain (macOS Keychain / Windows Credential Manager) and loaded automatically on startup.
 
 ### As a Library
 
@@ -144,7 +144,7 @@ null-agent auth status       # Show which providers are configured
 ### How Keys Are Resolved
 
 1. Environment variable (highest priority)
-2. Stored credentials in `~/.null-agent/credentials.json`
+2. OS keychain storage (via keytar)
 3. `.null-agent.json` config file
 
 ### Setting Keys
@@ -173,24 +173,24 @@ null-agent ships with 28 built-in tools covering file operations, shell executio
 
 ### Git Tools
 
-| Tool            | Name           | Description                                  |
-| --------------- | -------------- | -------------------------------------------- |
-| `gitStatusTool` | `git_status`   | Git status                                   |
-| `gitDiffTool`   | `git_diff`     | Git diff                                     |
-| `gitLogTool`    | `git_log`      | Git log                                      |
-| `gitBranchTool` | `git_branch`   | Git branches                                 |
-| `gitAddTool`    | `git_add`      | Git add                                      |
-| `gitCommitTool` | `git_commit`   | Git commit                                   |
-| `gitShowTool`   | `git_show`     | Git show                                     |
-| `gitPushTool`   | `git_push`     | Git push                                     |
-| `gitPullTool`   | `git_pull`     | Git pull                                     |
-| `gitFetchTool`  | `git_fetch`    | Git fetch                                    |
-| `gitMergeTool`  | `git_merge`    | Git merge                                    |
-| `gitRebaseTool` | `git_rebase`   | Git rebase                                  |
-| `gitStashPushTool` | `git_stash_push` | Git stash push                            |
-| `gitStashPopTool`  | `git_stash_pop`  | Git stash pop                             |
-| `gitStashListTool` | `git_stash_list` | Git stash list                           |
-| `gitStashDropTool` | `git_stash_drop` | Git stash drop                           |
+| Tool               | Name             | Description    |
+| ------------------ | ---------------- | -------------- |
+| `gitStatusTool`    | `git_status`     | Git status     |
+| `gitDiffTool`      | `git_diff`       | Git diff       |
+| `gitLogTool`       | `git_log`        | Git log        |
+| `gitBranchTool`    | `git_branch`     | Git branches   |
+| `gitAddTool`       | `git_add`        | Git add        |
+| `gitCommitTool`    | `git_commit`     | Git commit     |
+| `gitShowTool`      | `git_show`       | Git show       |
+| `gitPushTool`      | `git_push`       | Git push       |
+| `gitPullTool`      | `git_pull`       | Git pull       |
+| `gitFetchTool`     | `git_fetch`      | Git fetch      |
+| `gitMergeTool`     | `git_merge`      | Git merge      |
+| `gitRebaseTool`    | `git_rebase`     | Git rebase     |
+| `gitStashPushTool` | `git_stash_push` | Git stash push |
+| `gitStashPopTool`  | `git_stash_pop`  | Git stash pop  |
+| `gitStashListTool` | `git_stash_list` | Git stash list |
+| `gitStashDropTool` | `git_stash_drop` | Git stash drop |
 
 ### Dev Workflow Tools
 
@@ -510,6 +510,112 @@ const result = await agent.chat("Investigate these 3 files in parallel");
 ```
 
 Safety limits: 5 concurrent sub-agents, 3 spawns per turn, 30s timeout per sub-agent.
+
+## Agent Events
+
+The agent emits rich events for streaming UIs and monitoring:
+
+```ts
+import { Agent } from "null-agent";
+
+const agent = new Agent({
+  provider,
+  tools,
+  eventHandlers: {
+    onAgentStart: (data) => console.log("Started:", data.message),
+    onTurnStart: (data) => console.log("Turn:", data.turn),
+    onMessageUpdate: (data) => console.log("Text:", data.delta),
+    onToolExecutionStart: (data) => console.log("Running:", data.name),
+    onToolExecutionEnd: (data) => console.log("Done:", data.name, data.isError),
+    onAgentEnd: (data) => console.log("Complete in", data.iterations, "iterations"),
+  },
+});
+
+await agent.chat("Hello");
+```
+
+**Events:**
+
+| Event                   | Description              |
+| ----------------------- | ------------------------ |
+| `onAgentStart`          | Agent begins processing  |
+| `onTurnStart`           | New turn begins          |
+| `onMessageStart`        | Assistant message starts |
+| `onMessageUpdate`       | Text chunk received      |
+| `onMessageEnd`          | Message complete         |
+| `onToolExecutionStart`  | Tool call starts         |
+| `onToolExecutionUpdate` | Tool streaming result    |
+| `onToolExecutionEnd`    | Tool execution complete  |
+| `onToolResult`          | Tool result ready        |
+| `onAgentEnd`            | Agent finished           |
+
+## Tool Hooks
+
+Intercept and control tool execution:
+
+```ts
+const agent = new Agent({
+  provider,
+  tools,
+  toolHooks: {
+    beforeToolCall: async (context) => {
+      console.log("About to run:", context.name);
+      // Return false to block execution
+    },
+    afterToolCall: async (context) => {
+      console.log("Finished:", context.name, context.result);
+    },
+  },
+});
+```
+
+## Steering
+
+Inject messages or queue work during/after agent runs:
+
+```ts
+const agent = new Agent({ provider, tools });
+
+// Inject context before next chat
+agent.steer({ role: "user", content: "Remember: use TypeScript" });
+await agent.chat("Hello");
+
+// Queue work after agent stops
+agent.followUp(async () => {
+  await agent.chat("Now summarize what we did");
+});
+```
+
+## TypeBox Tool Schemas
+
+Tools can use TypeBox for type-safe parameter validation:
+
+```ts
+import { toolParams, String, Object } from "null-agent";
+
+const tool = {
+  name: "my_tool",
+  description: "Does something",
+  parameters: {
+    /* JSON Schema */
+  },
+  typeboxSchema: toolParams(
+    {
+      name: String({ description: "The name" }),
+      options: Object(
+        {
+          properties: { verbose: String() },
+        },
+        ["verbose"],
+      ),
+    },
+    ["name"],
+  ),
+  async execute(params) {
+    // params are validated
+  },
+};
+```
 
 ## Code Review
 

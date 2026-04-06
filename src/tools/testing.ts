@@ -158,7 +158,7 @@ export const coverageTool: ToolDefinition = {
     },
   },
   async execute(params) {
-    const file = params["file"] as string | undefined;
+    const _file = params["file"] as string | undefined;
 
     try {
       const coverage = await getCoverage();

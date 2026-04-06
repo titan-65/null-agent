@@ -1,5 +1,11 @@
 import { createInterface } from "node:readline";
-import keytar from "keytar";
+
+let keytar: typeof import("keytar") | null = null;
+try {
+  keytar = await import("keytar");
+} catch {
+  // Keytar not available
+}
 
 const SERVICE_NAME = "null-agent";
 const ACCOUNT_PREFIX = "api-key-";
@@ -56,6 +62,7 @@ export const AUTH_PROMPTS: AuthPrompt[] = [
 
 export async function loadCredentials(): Promise<AuthCredentials> {
   const credentials: AuthCredentials = {};
+  if (!keytar) return credentials;
   try {
     const credentialsList = await keytar.findCredentials(SERVICE_NAME);
     for (const cred of credentialsList) {
@@ -69,28 +76,30 @@ export async function loadCredentials(): Promise<AuthCredentials> {
 }
 
 export async function saveCredentials(credentials: AuthCredentials): Promise<void> {
-  // Clear existing and save new
-  const existing = await keytar.findCredentials(SERVICE_NAME);
-  for (const cred of existing) {
-    await keytar.deletePassword(SERVICE_NAME, cred.account);
-  }
-  // Save new credentials
-  for (const [provider, key] of Object.entries(credentials)) {
-    if (key) {
-      await keytar.setPassword(SERVICE_NAME, `${ACCOUNT_PREFIX}${provider}`, key);
+  if (!keytar) return;
+  try {
+    const existing = await keytar.findCredentials(SERVICE_NAME);
+    for (const cred of existing) {
+      await keytar.deletePassword(SERVICE_NAME, cred.account);
     }
+    for (const [provider, key] of Object.entries(credentials)) {
+      if (key) {
+        await keytar.setPassword(SERVICE_NAME, `${ACCOUNT_PREFIX}${provider}`, key);
+      }
+    }
+  } catch {
+    // Keychain not available
   }
 }
 
 export async function getCredential(provider: string): Promise<string | null> {
-  // Check env var first
   const prompt = AUTH_PROMPTS.find((p) => p.provider === provider);
   if (prompt) {
     const envValue = process.env[prompt.envKey];
     if (envValue) return envValue;
   }
 
-  // Check stored credentials in keychain
+  if (!keytar) return null;
   try {
     return await keytar.getPassword(SERVICE_NAME, `${ACCOUNT_PREFIX}${provider}`);
   } catch {
@@ -99,11 +108,21 @@ export async function getCredential(provider: string): Promise<string | null> {
 }
 
 export async function setCredential(provider: string, key: string): Promise<void> {
-  await keytar.setPassword(SERVICE_NAME, `${ACCOUNT_PREFIX}${provider}`, key);
+  if (!keytar) return;
+  try {
+    await keytar.setPassword(SERVICE_NAME, `${ACCOUNT_PREFIX}${provider}`, key);
+  } catch {
+    // Keychain not available
+  }
 }
 
 export async function removeCredential(provider: string): Promise<void> {
-  await keytar.deletePassword(SERVICE_NAME, `${ACCOUNT_PREFIX}${provider}`);
+  if (!keytar) return;
+  try {
+    await keytar.deletePassword(SERVICE_NAME, `${ACCOUNT_PREFIX}${provider}`);
+  } catch {
+    // Keychain not available
+  }
 }
 
 export async function interactiveAuth(provider?: string): Promise<void> {
@@ -182,9 +201,7 @@ export async function interactiveAuth(provider?: string): Promise<void> {
     }
   }
 
-  console.log(
-    "\n  Done. Keys are stored securely in the OS keychain.\n",
-  );
+  console.log("\n  Done. Keys are stored securely in the OS keychain.\n");
   rl.close();
 }
 

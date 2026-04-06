@@ -1,4 +1,6 @@
 import type { ToolDefinition, ToolResult } from "./types.ts";
+import type { TSchema } from "@sinclair/typebox";
+import { validateToolCall } from "./schema.ts";
 
 export class ToolRegistry {
   private tools = new Map<string, ToolDefinition>();
@@ -28,6 +30,16 @@ export class ToolRegistry {
         content: `Error: Unknown tool "${name}"`,
         isError: true,
       };
+    }
+
+    if (tool.typeboxSchema) {
+      const validation = validateToolCall(tool.typeboxSchema, params);
+      if (!validation.valid) {
+        return {
+          content: `Invalid parameters for ${name}: ${validation.errors}`,
+          isError: true,
+        };
+      }
     }
 
     try {

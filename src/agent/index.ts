@@ -5,8 +5,11 @@ import { Orchestrator } from "./orchestrator.ts";
 import { type Conversation, createConversation, updateConversation } from "../memory/store.ts";
 import { type Task, createTask, extractTasks, markTaskDone } from "./tasks.ts";
 import { createSpawnTool } from "../tools/spawn.ts";
+import { AgentEventEmitter, createAgentEvent, type AgentEventHandlers } from "./events.ts";
 
-export type { AgentCallbacks, AgentConfig, AgentResult } from "./types.ts";
+export type { AgentCallbacks, AgentConfig, AgentResult, AgentState } from "./types.ts";
+export type { AgentEvent, AgentEventType, AgentEventHandlers } from "./events.ts";
+export { AgentEventEmitter, createAgentEvent };
 
 export class Agent {
   private config: AgentConfig;
@@ -14,11 +17,22 @@ export class Agent {
   private conversation: Conversation | null = null;
   private tasks: Task[] = [];
   private orchestrator: Orchestrator | null = null;
+  private eventEmitter: AgentEventEmitter;
+  private steeringQueue: Message[] = [];
+  private followUpQueue: Array<() => Promise<void>> = [];
 
   constructor(config: AgentConfig) {
     this.config = config;
+    this.eventEmitter = new AgentEventEmitter();
 
-    // Set up orchestrator and spawn_task tool if enabled
+    if (config.eventHandlers) {
+      this.eventEmitter.setHandlers(config.eventHandlers);
+    }
+
+    if (config.toolHooks) {
+      this.config = { ...config, toolHooks: config.toolHooks };
+    }
+
     if (config.enableOrchestrator !== false) {
       this.orchestrator = new Orchestrator({
         provider: config.provider,
@@ -32,29 +46,70 @@ export class Agent {
   }
 
   async chat(message: string, callbacks?: AgentCallbacks): Promise<AgentResult> {
-    const result = await runAgent(this.config, message, this.history, callbacks);
+    // Inject any steering messages
+    if (this.steeringQueue.length > 0) {
+      this.history = [...this.steeringQueue, ...this.history];
+      this.steeringQueue = [];
+    }
 
-    // Update history
+    const result = await runAgent(
+      this.config,
+      message,
+      this.history,
+      callbacks,
+      this.config.toolHooks,
+      this.eventEmitter,
+    );
+
+    await this.eventEmitter.waitForSettled();
+
     this.history.push({ role: "user", content: message });
     if (result.content) {
       this.history.push({ role: "assistant", content: result.content });
 
-      // Extract tasks from assistant response
       const extractedTasks = extractTasks(result.content);
       for (const desc of extractedTasks) {
-        // Don't add duplicates
         if (!this.tasks.some((t) => t.description === desc && t.status !== "done")) {
           this.tasks.push(createTask(desc, "conversation"));
         }
       }
     }
 
-    // Save to memory if configured
     if (this.config.memory) {
       await this.saveToMemory();
     }
 
+    // Process follow-up queue
+    if (this.followUpQueue.length > 0) {
+      const followUps = [...this.followUpQueue];
+      this.followUpQueue = [];
+      for (const followUp of followUps) {
+        await followUp();
+      }
+    }
+
     return result;
+  }
+
+  steer(message: Message): void {
+    this.steeringQueue.push(message);
+  }
+
+  followUp(fn: () => Promise<void>): void {
+    this.followUpQueue.push(fn);
+  }
+
+  clearAllQueues(): void {
+    this.steeringQueue = [];
+    this.followUpQueue = [];
+  }
+
+  setEventHandlers(handlers: AgentEventHandlers): void {
+    this.eventEmitter.setHandlers(handlers);
+  }
+
+  getEventEmitter(): AgentEventEmitter {
+    return this.eventEmitter;
   }
 
   async loadConversation(projectDir?: string): Promise<Conversation | null> {

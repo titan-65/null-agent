@@ -50,8 +50,10 @@
     "prepublishOnly": "vp run build"
   },
   "dependencies": {
+    "ajv": "^8.18.0",
     "h3": "2.0.1-rc.20",
-    "keytar": "^7.9.0"
+    "keytar": "^7.9.0",
+    "typebox": "^1.1.16"
   },
   "devDependencies": {
     "@inkjs/ui": "^2.0.0",

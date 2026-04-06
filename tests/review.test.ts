@@ -3,7 +3,7 @@ import { analyzeSecurity } from "../src/review/security.ts";
 import { analyzePerformance } from "../src/review/performance.ts";
 import { analyzeQuality } from "../src/review/quality.ts";
 import { calculateOverallScore } from "../src/review/types.ts";
-import type { ReviewComment, CategoryScore } from "../src/review/types.ts";
+import type { CategoryScore } from "../src/review/types.ts";
 
 // Security analyzer tests
 test("detects hardcoded secrets", () => {

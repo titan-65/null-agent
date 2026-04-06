@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach } from "vite-plus/test";
-import { mkdir, writeFile, rm } from "node:fs/promises";
+import { mkdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { MemoryStore } from "../src/memory/store.ts";

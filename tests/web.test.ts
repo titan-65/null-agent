@@ -1,6 +1,15 @@
 import { describe, expect, it, vi, afterEach } from "vite-plus/test";
 import { webSearchTool, webFetchTool } from "../src/tools/web.ts";
 
+vi.mock("keytar", () => ({
+  default: {
+    getPassword: vi.fn(() => Promise.resolve(null)),
+    setPassword: vi.fn(() => Promise.resolve()),
+    deletePassword: vi.fn(() => Promise.resolve(true)),
+    findCredentials: vi.fn(() => Promise.resolve([])),
+  },
+}));
+
 describe("webSearchTool", () => {
   afterEach(() => {
     vi.restoreAllMocks();

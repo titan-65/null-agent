@@ -189,7 +189,8 @@ export const gitShowTool: ToolDefinition = {
 
 export const gitPushTool: ToolDefinition = {
   name: "git_push",
-  description: "Push commits to a remote repository. Use 'remote' and 'branch' to specify the target.",
+  description:
+    "Push commits to a remote repository. Use 'remote' and 'branch' to specify the target.",
   parameters: {
     type: "object",
     properties: {

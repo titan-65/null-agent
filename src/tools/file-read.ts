@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import type { ToolDefinition } from "./types.ts";
+import { Object, String, toolParams } from "./schema.ts";
 
 export const fileReadTool: ToolDefinition = {
   name: "file_read",
@@ -14,6 +15,12 @@ export const fileReadTool: ToolDefinition = {
     },
     required: ["path"],
   },
+  typeboxSchema: toolParams(
+    {
+      path: String({ description: "The path to the file to read." }),
+    },
+    ["path"],
+  ),
   async execute(params) {
     const filePath = params["path"] as string;
     if (!filePath) {
