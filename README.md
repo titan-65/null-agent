@@ -295,6 +295,7 @@ null-agent
 | `/clear`             | Clear conversation history   |
 | `/context`           | Show project context         |
 | `/history`           | List past conversations      |
+| `/search <query>`    | Search past conversations    |
 | `/resume <id>`       | Resume a past conversation   |
 | `/tasks`             | Show tracked tasks           |
 | `/done <id>`         | Mark a task complete         |
@@ -327,6 +328,7 @@ null-agent --server --port 3737 --host 0.0.0.0
 | `GET`    | `/history`                | Get conversation history       |
 | `DELETE` | `/history`                | Clear conversation history     |
 | `GET`    | `/conversations`          | List saved conversations       |
+| `GET`    | `/conversations/search`   | Search conversations by query  |
 | `POST`   | `/conversations/resume`   | Resume a conversation          |
 | `GET`    | `/tasks`                  | List tasks                     |
 | `POST`   | `/tasks`                  | Add a task                     |
