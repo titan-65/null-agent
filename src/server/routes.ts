@@ -116,6 +116,22 @@ export function registerRoutes(app: any, ctx: RouteContext): void {
     return { conversations };
   });
 
+  router.get("/conversations/search", async (event: H3Event) => {
+    const query = event.node.req.url?.split("?q=")[1]?.split("&")[0];
+
+    if (!query) {
+      setResponseStatus(event, 400);
+      return { error: "q parameter is required" };
+    }
+
+    const results = await ctx.memory.searchConversations({
+      query: decodeURIComponent(query),
+      limit: 10,
+    });
+
+    return { results };
+  });
+
   router.post("/conversations/resume", async (event: H3Event) => {
     const body = await readBody(event);
     const id = body?.id;
