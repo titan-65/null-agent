@@ -1,10 +1,8 @@
-import { readFile, writeFile, mkdir } from "node:fs/promises";
-import { join } from "node:path";
-import { homedir } from "node:os";
 import { createInterface } from "node:readline";
+import keytar from "keytar";
 
-const AUTH_DIR = join(homedir(), ".null-agent");
-const AUTH_FILE = join(AUTH_DIR, "credentials.json");
+const SERVICE_NAME = "null-agent";
+const ACCOUNT_PREFIX = "api-key-";
 
 export interface AuthCredentials {
   [provider: string]: string;
@@ -57,17 +55,31 @@ export const AUTH_PROMPTS: AuthPrompt[] = [
 ];
 
 export async function loadCredentials(): Promise<AuthCredentials> {
+  const credentials: AuthCredentials = {};
   try {
-    const data = await readFile(AUTH_FILE, "utf-8");
-    return JSON.parse(data) as AuthCredentials;
+    const credentialsList = await keytar.findCredentials(SERVICE_NAME);
+    for (const cred of credentialsList) {
+      const provider = cred.account.replace(ACCOUNT_PREFIX, "");
+      credentials[provider] = cred.password;
+    }
   } catch {
-    return {};
+    // Keychain not available
   }
+  return credentials;
 }
 
 export async function saveCredentials(credentials: AuthCredentials): Promise<void> {
-  await mkdir(AUTH_DIR, { recursive: true });
-  await writeFile(AUTH_FILE, JSON.stringify(credentials, null, 2), "utf-8");
+  // Clear existing and save new
+  const existing = await keytar.findCredentials(SERVICE_NAME);
+  for (const cred of existing) {
+    await keytar.deletePassword(SERVICE_NAME, cred.account);
+  }
+  // Save new credentials
+  for (const [provider, key] of Object.entries(credentials)) {
+    if (key) {
+      await keytar.setPassword(SERVICE_NAME, `${ACCOUNT_PREFIX}${provider}`, key);
+    }
+  }
 }
 
 export async function getCredential(provider: string): Promise<string | null> {
@@ -78,21 +90,20 @@ export async function getCredential(provider: string): Promise<string | null> {
     if (envValue) return envValue;
   }
 
-  // Check stored credentials
-  const credentials = await loadCredentials();
-  return credentials[provider] ?? null;
+  // Check stored credentials in keychain
+  try {
+    return await keytar.getPassword(SERVICE_NAME, `${ACCOUNT_PREFIX}${provider}`);
+  } catch {
+    return null;
+  }
 }
 
 export async function setCredential(provider: string, key: string): Promise<void> {
-  const credentials = await loadCredentials();
-  credentials[provider] = key;
-  await saveCredentials(credentials);
+  await keytar.setPassword(SERVICE_NAME, `${ACCOUNT_PREFIX}${provider}`, key);
 }
 
 export async function removeCredential(provider: string): Promise<void> {
-  const credentials = await loadCredentials();
-  delete credentials[provider];
-  await saveCredentials(credentials);
+  await keytar.deletePassword(SERVICE_NAME, `${ACCOUNT_PREFIX}${provider}`);
 }
 
 export async function interactiveAuth(provider?: string): Promise<void> {
@@ -115,6 +126,7 @@ export async function interactiveAuth(provider?: string): Promise<void> {
     });
 
   console.log("\n  null-agent — Configure API Keys\n");
+  console.log("  Keys are stored securely in the OS keychain.\n");
 
   // If no provider specified, let user choose
   let selectedPrompts = prompts;
@@ -161,7 +173,7 @@ export async function interactiveAuth(provider?: string): Promise<void> {
 
     if (key.trim()) {
       await setCredential(p.provider, key.trim());
-      console.log(`  \x1b[32m✓ Saved ${p.displayName} key\x1b[0m`);
+      console.log(`  \x1b[32m✓ Saved ${p.displayName} key (encrypted)\x1b[0m`);
 
       // Also set in current process env
       process.env[p.envKey] = key.trim();
@@ -170,12 +182,15 @@ export async function interactiveAuth(provider?: string): Promise<void> {
     }
   }
 
-  console.log("\n  Done. Keys are stored in ~/.null-agent/credentials.json\n");
+  console.log(
+    "\n  Done. Keys are stored securely in the OS keychain.\n",
+  );
   rl.close();
 }
 
 export async function printAuthStatus(): Promise<void> {
   console.log("\n  null-agent — API Key Status\n");
+  console.log("  Keys are stored securely in the OS keychain.\n");
 
   for (const p of AUTH_PROMPTS) {
     const envKey = process.env[p.envKey];
@@ -185,7 +200,7 @@ export async function printAuthStatus(): Promise<void> {
     if (envKey) {
       status = `\x1b[32m✓ env (${p.envKey})\x1b[0m`;
     } else if (stored) {
-      status = `\x1b[32m✓ stored\x1b[0m`;
+      status = `\x1b[32m✓ stored (encrypted)\x1b[0m`;
     } else {
       status = `\x1b[90mnot set\x1b[0m`;
     }

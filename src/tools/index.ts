@@ -11,6 +11,15 @@ export {
   gitLogTool,
   gitShowTool,
   gitStatusTool,
+  gitPushTool,
+  gitPullTool,
+  gitFetchTool,
+  gitMergeTool,
+  gitRebaseTool,
+  gitStashPushTool,
+  gitStashPopTool,
+  gitStashListTool,
+  gitStashDropTool,
   gitTools,
 } from "./git.ts";
 export {

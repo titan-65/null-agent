@@ -50,7 +50,8 @@
     "prepublishOnly": "vp run build"
   },
   "dependencies": {
-    "h3": "2.0.1-rc.20"
+    "h3": "2.0.1-rc.20",
+    "keytar": "^7.9.0"
   },
   "devDependencies": {
     "@inkjs/ui": "^2.0.0",

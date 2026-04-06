@@ -8,8 +8,8 @@ import {
   gitShowTool,
 } from "../src/tools/git.ts";
 
-test("git_tools exports all 7 tools", () => {
-  expect(gitTools).toHaveLength(7);
+test("git_tools exports all 16 tools", () => {
+  expect(gitTools).toHaveLength(16);
   const names = gitTools.map((t) => t.name);
   expect(names).toContain("git_status");
   expect(names).toContain("git_diff");
@@ -18,6 +18,15 @@ test("git_tools exports all 7 tools", () => {
   expect(names).toContain("git_add");
   expect(names).toContain("git_commit");
   expect(names).toContain("git_show");
+  expect(names).toContain("git_push");
+  expect(names).toContain("git_pull");
+  expect(names).toContain("git_fetch");
+  expect(names).toContain("git_merge");
+  expect(names).toContain("git_rebase");
+  expect(names).toContain("git_stash_push");
+  expect(names).toContain("git_stash_pop");
+  expect(names).toContain("git_stash_list");
+  expect(names).toContain("git_stash_drop");
 });
 
 test("git_status executes successfully", async () => {
