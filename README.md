@@ -6,7 +6,7 @@
   <img src="https://img.shields.io/badge/node-%3E%3D20.19-brightgreen?style=for-the-badge&logo=node.js" alt="Node" />
   <img src="https://img.shields.io/badge/typescript-6.0-blue?style=for-the-badge&logo=typescript" alt="TypeScript" />
   <img src="https://img.shields.io/badge/tests-38%2F38%20passing-brightgreen?style=for-the-badge" alt="Tests" />
-  <img src="https://img.shields.io/badge/tools-28%20built--in-orange?style=for-the-badge" alt="Tools" />
+  <img src="https://img.shields.io/badge/tools-35%20built--in-orange?style=for-the-badge" alt="Tools" />
   <img src="https://img.shields.io/badge/providers-5%20LLMs-purple?style=for-the-badge" alt="Providers" />
   <img src="https://img.shields.io/badge/build-passing-success?style=for-the-badge&logo=vite" alt="Build" />
 </p>
@@ -173,15 +173,24 @@ null-agent ships with 28 built-in tools covering file operations, shell executio
 
 ### Git Tools
 
-| Tool            | Name         | Description  |
-| --------------- | ------------ | ------------ |
-| `gitStatusTool` | `git_status` | Git status   |
-| `gitDiffTool`   | `git_diff`   | Git diff     |
-| `gitLogTool`    | `git_log`    | Git log      |
-| `gitBranchTool` | `git_branch` | Git branches |
-| `gitAddTool`    | `git_add`    | Git add      |
-| `gitCommitTool` | `git_commit` | Git commit   |
-| `gitShowTool`   | `git_show`   | Git show     |
+| Tool            | Name           | Description                                  |
+| --------------- | -------------- | -------------------------------------------- |
+| `gitStatusTool` | `git_status`   | Git status                                   |
+| `gitDiffTool`   | `git_diff`     | Git diff                                     |
+| `gitLogTool`    | `git_log`      | Git log                                      |
+| `gitBranchTool` | `git_branch`   | Git branches                                 |
+| `gitAddTool`    | `git_add`      | Git add                                      |
+| `gitCommitTool` | `git_commit`   | Git commit                                   |
+| `gitShowTool`   | `git_show`     | Git show                                     |
+| `gitPushTool`   | `git_push`     | Git push                                     |
+| `gitPullTool`   | `git_pull`     | Git pull                                     |
+| `gitFetchTool`  | `git_fetch`    | Git fetch                                    |
+| `gitMergeTool`  | `git_merge`    | Git merge                                    |
+| `gitRebaseTool` | `git_rebase`   | Git rebase                                  |
+| `gitStashPushTool` | `git_stash_push` | Git stash push                            |
+| `gitStashPopTool`  | `git_stash_pop`  | Git stash pop                             |
+| `gitStashListTool` | `git_stash_list` | Git stash list                           |
+| `gitStashDropTool` | `git_stash_drop` | Git stash drop                           |
 
 ### Dev Workflow Tools
 

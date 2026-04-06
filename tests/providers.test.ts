@@ -4,6 +4,19 @@ import { OpenAIProvider } from "../src/providers/openai.ts";
 import type { StreamChunk } from "../src/providers/types.ts";
 
 describe("AnthropicProvider streaming", () => {
+  beforeEach(() => {
+    vi.stubGlobal("fetch", vi.fn(async () => {
+      return new Response(
+        "data: {\"type\":\"message_stop\"}\n\n",
+        { status: 200, headers: { "content-type": "text/event-stream" } }
+      );
+    }));
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   test("streams text chunks", async () => {
     const provider = new AnthropicProvider({ apiKey: "test-key" });
     
@@ -141,6 +154,19 @@ describe("AnthropicProvider streaming", () => {
 });
 
 describe("OpenAIProvider streaming", () => {
+  beforeEach(() => {
+    vi.stubGlobal("fetch", vi.fn(async () => {
+      return new Response(
+        "data: [DONE]\n\n",
+        { status: 200, headers: { "content-type": "text/event-stream" } }
+      );
+    }));
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   test("streams text chunks", async () => {
     const provider = new OpenAIProvider({ apiKey: "test-key" });
     
