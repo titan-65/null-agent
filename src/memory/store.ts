@@ -1,7 +1,12 @@
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { homedir } from "node:os";
-import type { Conversation, ConversationSummary } from "./types.ts";
+import type {
+  Conversation,
+  ConversationSummary,
+  ConversationSearchResult,
+  SearchOptions,
+} from "./types.ts";
 import type { Message } from "../providers/types.ts";
 
 const MEMORY_DIR = join(homedir(), ".null-agent", "memory");
@@ -93,6 +98,99 @@ export class MemoryStore {
       return true;
     } catch {
       return false;
+    }
+  }
+
+  async searchConversations(options: SearchOptions): Promise<ConversationSearchResult[]> {
+    await this.init();
+    const { query, limit = 10, projectDir } = options;
+
+    if (!query.trim()) return [];
+
+    const terms = query.toLowerCase().split(/\s+/).filter((t) => t.length > 1);
+    if (terms.length === 0) return [];
+
+    try {
+      const files = await readdir(this.memoryDir);
+      const jsonFiles = files.filter((f) => f.endsWith(".json"));
+
+      const results: Array<ConversationSearchResult & { score: number }> = [];
+
+      for (const file of jsonFiles) {
+        try {
+          const data = await readFile(join(this.memoryDir, file), "utf-8");
+          const conv = JSON.parse(data) as Conversation;
+
+          // Filter by project if specified
+          if (projectDir && conv.metadata.projectDir !== projectDir) continue;
+
+          const matches: string[] = [];
+          let score = 0;
+
+          // Search title
+          const titleLower = conv.title.toLowerCase();
+          for (const term of terms) {
+            if (titleLower.includes(term)) {
+              score += 10;
+              matches.push(`title: "${conv.title}"`);
+              break;
+            }
+          }
+
+          // Search summary
+          if (conv.metadata.summary) {
+            const summaryLower = conv.metadata.summary.toLowerCase();
+            for (const term of terms) {
+              if (summaryLower.includes(term)) {
+                score += 5;
+                matches.push(`summary: "${conv.metadata.summary}"`);
+                break;
+              }
+            }
+          }
+
+          // Search messages
+          for (const msg of conv.messages) {
+            const contentLower = msg.content.toLowerCase();
+            let msgMatches = false;
+            for (const term of terms) {
+              if (contentLower.includes(term)) {
+                msgMatches = true;
+                score += 1;
+              }
+            }
+            if (msgMatches && matches.length < 3) {
+              const snippet = msg.content.length > 80
+                ? msg.content.slice(0, 77) + "..."
+                : msg.content;
+              matches.push(`${msg.role}: "${snippet.replace(/\n/g, " ")}"`);
+            }
+          }
+
+          if (score > 0) {
+            results.push({
+              id: conv.id,
+              title: conv.title,
+              updatedAt: conv.updatedAt,
+              matches,
+              messageCount: conv.metadata.messageCount,
+              score,
+            });
+          }
+        } catch {
+          // Skip corrupted files
+        }
+      }
+
+      // Sort by score (highest first), then by recency
+      results.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+      });
+
+      return results.slice(0, limit).map(({ score: _, ...rest }) => rest);
+    } catch {
+      return [];
     }
   }
 }

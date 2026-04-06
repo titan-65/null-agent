@@ -37,8 +37,6 @@ import {
   runTestTool,
   fixTestTool,
   coverageTool,
-  benchmarkTool,
-  aiTestTool,
 } from "./testing.ts";
 import { webSearchTool, webFetchTool } from "./web.ts";
 import { ToolRegistry } from "./registry.ts";
@@ -55,8 +53,6 @@ export const builtinTools: ToolDefinition[] = [
   runTestTool,
   fixTestTool,
   coverageTool,
-  benchmarkTool,
-  aiTestTool,
   webSearchTool,
   webFetchTool,
 ];

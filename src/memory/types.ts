@@ -26,3 +26,17 @@ export interface ConversationSummary {
   messageCount: number;
   summary?: string;
 }
+
+export interface ConversationSearchResult {
+  id: string;
+  title: string;
+  updatedAt: string;
+  matches: string[];
+  messageCount: number;
+}
+
+export interface SearchOptions {
+  query: string;
+  limit?: number;
+  projectDir?: string;
+}

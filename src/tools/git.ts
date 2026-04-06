@@ -1,12 +1,15 @@
-import { exec } from "node:child_process";
+import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import type { ToolDefinition } from "./types.ts";
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
-async function runGit(args: string, cwd?: string): Promise<{ content: string; isError: boolean }> {
+async function runGit(
+  args: string[],
+  cwd?: string,
+): Promise<{ content: string; isError: boolean }> {
   try {
-    const { stdout, stderr } = await execAsync(`git ${args}`, {
+    const { stdout, stderr } = await execFileAsync("git", args, {
       cwd,
       timeout: 15_000,
       maxBuffer: 1024 * 1024,
@@ -28,13 +31,14 @@ async function runGit(args: string, cwd?: string): Promise<{ content: string; is
 
 export const gitStatusTool: ToolDefinition = {
   name: "git_status",
-  description: "Show the working tree status. Shows staged, unstaged, and untracked files.",
+  description:
+    "Show the working tree status. Shows staged, unstaged, and untracked files.",
   parameters: {
     type: "object",
     properties: {},
   },
   async execute() {
-    return runGit("status --short --branch");
+    return runGit(["status", "--short", "--branch"]);
   },
 };
 
@@ -59,17 +63,18 @@ export const gitDiffTool: ToolDefinition = {
     const staged = params["staged"] as boolean | undefined;
     const path = params["path"] as string | undefined;
 
-    let cmd = "diff";
-    if (staged) cmd += " --staged";
-    if (path) cmd += ` -- ${path}`;
+    const args = ["diff"];
+    if (staged) args.push("--staged");
+    if (path) args.push("--", path);
 
-    return runGit(cmd);
+    return runGit(args);
   },
 };
 
 export const gitLogTool: ToolDefinition = {
   name: "git_log",
-  description: "Show commit history. Use 'count' to limit the number of commits shown.",
+  description:
+    "Show commit history. Use 'count' to limit the number of commits shown.",
   parameters: {
     type: "object",
     properties: {
@@ -87,10 +92,10 @@ export const gitLogTool: ToolDefinition = {
     const count = (params["count"] as number) ?? 10;
     const path = params["path"] as string | undefined;
 
-    let cmd = `log --oneline -n ${count}`;
-    if (path) cmd += ` -- ${path}`;
+    const args = ["log", "--oneline", "-n", String(count)];
+    if (path) args.push("--", path);
 
-    return runGit(cmd);
+    return runGit(args);
   },
 };
 
@@ -108,9 +113,9 @@ export const gitBranchTool: ToolDefinition = {
   },
   async execute(params) {
     const showAll = params["all"] as boolean | undefined;
-    let cmd = "branch";
-    if (showAll) cmd += " -a";
-    return runGit(cmd);
+    const args = ["branch"];
+    if (showAll) args.push("-a");
+    return runGit(args);
   },
 };
 
@@ -131,9 +136,12 @@ export const gitAddTool: ToolDefinition = {
   async execute(params) {
     const path = params["path"] as string;
     if (!path) {
-      return { content: "Error: 'path' parameter is required.", isError: true };
+      return {
+        content: "Error: 'path' parameter is required.",
+        isError: true,
+      };
     }
-    return runGit(`add ${path}`);
+    return runGit(["add", "--", path]);
   },
 };
 
@@ -158,27 +166,28 @@ export const gitCommitTool: ToolDefinition = {
         isError: true,
       };
     }
-    // Escape single quotes in the message
-    const escaped = message.replace(/'/g, "'\\''");
-    return runGit(`commit -m '${escaped}'`);
+    // execFile passes arguments safely - no shell escaping needed
+    return runGit(["commit", "-m", message]);
   },
 };
 
 export const gitShowTool: ToolDefinition = {
   name: "git_show",
-  description: "Show details of a specific commit or the latest commit.",
+  description:
+    "Show details of a specific commit or the latest commit.",
   parameters: {
     type: "object",
     properties: {
       ref: {
         type: "string",
-        description: "The commit ref to show (e.g., 'HEAD', 'abc123'). Default: HEAD.",
+        description:
+          "The commit ref to show (e.g., 'HEAD', 'abc123'). Default: HEAD.",
       },
     },
   },
   async execute(params) {
     const ref = (params["ref"] as string) ?? "HEAD";
-    return runGit(`show --stat ${ref}`);
+    return runGit(["show", "--stat", ref]);
   },
 };
 

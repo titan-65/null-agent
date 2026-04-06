@@ -3,7 +3,8 @@ import { runGh, checkGhAvailable } from "./utils.ts";
 
 export const issueCreateTool: ToolDefinition = {
   name: "issue_create",
-  description: "Create a GitHub Issue. Supports title, body, labels, and assignees.",
+  description:
+    "Create a GitHub Issue. Supports title, body, labels, and assignees.",
   parameters: {
     type: "object",
     properties: {
@@ -42,27 +43,28 @@ export const issueCreateTool: ToolDefinition = {
       return { content: "Error: 'title' is required.", isError: true };
     }
 
-    let cmd = `issue create --title '${title.replace(/'/g, "'\\''")}'`;
+    const ghArgs = ["issue", "create", "--title", title];
 
     if (params["body"]) {
-      cmd += ` --body '${(params["body"] as string).replace(/'/g, "'\\''")}'`;
+      ghArgs.push("--body", params["body"] as string);
     }
 
     if (params["labels"]) {
-      cmd += ` --label '${(params["labels"] as string[]).join(",")}'`;
+      ghArgs.push("--label", (params["labels"] as string[]).join(","));
     }
 
     if (params["assignees"]) {
-      cmd += ` --assignee '${(params["assignees"] as string[]).join(",")}'`;
+      ghArgs.push("--assignee", (params["assignees"] as string[]).join(","));
     }
 
-    return runGh(cmd);
+    return runGh(ghArgs);
   },
 };
 
 export const issueListTool: ToolDefinition = {
   name: "issue_list",
-  description: "List GitHub Issues. Filter by state, label, or assignee.",
+  description:
+    "List GitHub Issues. Filter by state, label, or assignee.",
   parameters: {
     type: "object",
     properties: {
@@ -94,18 +96,20 @@ export const issueListTool: ToolDefinition = {
       };
     }
 
-    let cmd = "issue list";
-    cmd += ` --state ${params["state"] ?? "open"}`;
-    cmd += ` --limit ${params["limit"] ?? 10}`;
+    const ghArgs = [
+      "issue", "list",
+      "--state", (params["state"] as string) ?? "open",
+      "--limit", String((params["limit"] as number) ?? 10),
+    ];
 
     if (params["label"]) {
-      cmd += ` --label '${params["label"]}'`;
+      ghArgs.push("--label", params["label"] as string);
     }
 
     if (params["assignee"]) {
-      cmd += ` --assignee '${params["assignee"]}'`;
+      ghArgs.push("--assignee", params["assignee"] as string);
     }
 
-    return runGh(cmd);
+    return runGh(ghArgs);
   },
 };

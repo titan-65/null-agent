@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import { createApp, toNodeListener } from "h3";
+import { createApp, toNodeListener, eventHandler } from "h3";
 import { Agent } from "../agent/index.ts";
 import { createProvider } from "../providers/index.ts";
 import type { ProviderName } from "../providers/index.ts";
@@ -14,6 +14,7 @@ export interface ServerConfig {
   host: string;
   provider?: ProviderName;
   model?: string;
+  authToken?: string;
 }
 
 export async function startServer(config: ServerConfig): Promise<void> {
@@ -49,6 +50,24 @@ export async function startServer(config: ServerConfig): Promise<void> {
   );
 
   const app = createApp();
+
+  // Auth middleware — only if authToken is configured
+  if (config.authToken) {
+    app.use(
+      eventHandler((event) => {
+        // Allow health check without auth
+        if (event.path === "/health") return;
+
+        const authHeader = event.headers.get("authorization");
+        if (!authHeader || authHeader !== `Bearer ${config.authToken}`) {
+          event.node.res.statusCode = 401;
+          event.node.res.setHeader("Content-Type", "application/json");
+          event.node.res.end(JSON.stringify({ error: "Unauthorized" }));
+          return;
+        }
+      }),
+    );
+  }
 
   // Register routes
   registerRoutes(app, { agent, memory, config: appConfig });

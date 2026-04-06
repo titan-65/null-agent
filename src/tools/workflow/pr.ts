@@ -46,7 +46,7 @@ export const prCreateTool: ToolDefinition = {
     }
 
     // Get branch info
-    const branchResult = await runGit("branch --show-current");
+    const branchResult = await runGit(["branch", "--show-current"]);
     const branch = branchResult.content || "unknown";
 
     // Generate title if not provided
@@ -58,10 +58,8 @@ export const prCreateTool: ToolDefinition = {
     // Generate body from commits if not provided
     let body = params["body"] as string | undefined;
     if (!body) {
-      const commitsResult = await runGit(
-        `log origin/main..HEAD --oneline --no-merges 2>/dev/null || git log origin/master..HEAD --oneline --no-merges 2>/dev/null`,
-      );
-      if (commitsResult.content) {
+      const commitsResult = await runGit(["log", "origin/main..HEAD", "--oneline", "--no-merges"]);
+      if (!commitsResult.isError && commitsResult.content) {
         const lines = commitsResult.content.split("\n").filter(Boolean);
         body = "## Changes\n\n";
         for (const line of lines) {
@@ -70,27 +68,26 @@ export const prCreateTool: ToolDefinition = {
       }
     }
 
-    // Build gh command
-    let cmd = `pr create --title '${(title ?? "").replace(/'/g, "'\\''")}'`;
+    // Build gh command args - no shell interpolation
+    const ghArgs = ["pr", "create", "--title", title ?? ""];
+
     if (body) {
-      cmd += ` --body '${body.replace(/'/g, "'\\''")}'`;
+      ghArgs.push("--body", body);
     }
     if (params["base"]) {
-      cmd += ` --base ${params["base"]}`;
+      ghArgs.push("--base", params["base"] as string);
     }
     if (params["draft"]) {
-      cmd += " --draft";
+      ghArgs.push("--draft");
     }
     if (params["labels"]) {
-      const labels = (params["labels"] as string[]).join(",");
-      cmd += ` --label '${labels}'`;
+      ghArgs.push("--label", (params["labels"] as string[]).join(","));
     }
     if (params["reviewers"]) {
-      const reviewers = (params["reviewers"] as string[]).join(",");
-      cmd += ` --reviewer '${reviewers}'`;
+      ghArgs.push("--reviewer", (params["reviewers"] as string[]).join(","));
     }
 
-    const result = await runGh(cmd);
+    const result = await runGh(ghArgs);
 
     if (!result.isError) {
       return {
@@ -132,17 +129,16 @@ export const prListTool: ToolDefinition = {
       };
     }
 
-    let cmd = "pr list";
-    cmd += ` --state ${params["state"] ?? "open"}`;
-    cmd += ` --limit ${params["limit"] ?? 10}`;
-    cmd += " --json number,title,author,state,reviewDecision,statusCheckRollup,createdAt,url";
-    cmd +=
-      " --template '{{range .}}#{{.number}} {{.title}} ({{.author.login}}) [{{.state}}] {{.url}}\n{{end}}'";
+    const ghArgs = [
+      "pr", "list",
+      "--state", (params["state"] as string) ?? "open",
+      "--limit", String((params["limit"] as number) ?? 10),
+    ];
 
     if (params["author"]) {
-      cmd += ` --author ${params["author"]}`;
+      ghArgs.push("--author", params["author"] as string);
     }
 
-    return runGh(cmd);
+    return runGh(ghArgs);
   },
 };

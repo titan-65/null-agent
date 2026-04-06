@@ -1,12 +1,12 @@
-import { exec } from "node:child_process";
+import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import type { ToolResult } from "../types.ts";
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
-export async function runGh(args: string): Promise<ToolResult> {
+export async function runGh(args: string[]): Promise<ToolResult> {
   try {
-    const { stdout, stderr } = await execAsync(`gh ${args}`, {
+    const { stdout, stderr } = await execFileAsync("gh", args, {
       timeout: 30_000,
       maxBuffer: 1024 * 1024,
     });
@@ -25,9 +25,9 @@ export async function runGh(args: string): Promise<ToolResult> {
   }
 }
 
-export async function runGit(args: string): Promise<ToolResult> {
+export async function runGit(args: string[]): Promise<ToolResult> {
   try {
-    const { stdout, stderr } = await execAsync(`git ${args}`, {
+    const { stdout, stderr } = await execFileAsync("git", args, {
       timeout: 15_000,
       maxBuffer: 1024 * 1024,
     });
@@ -48,7 +48,7 @@ export async function runGit(args: string): Promise<ToolResult> {
 
 export async function checkGhAvailable(): Promise<boolean> {
   try {
-    await execAsync("gh --version", { timeout: 5_000 });
+    await execFileAsync("gh", ["--version"], { timeout: 5_000 });
     return true;
   } catch {
     return false;

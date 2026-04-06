@@ -3,7 +3,8 @@ import { runGh, runGit, checkGhAvailable } from "./utils.ts";
 
 export const ciStatusTool: ToolDefinition = {
   name: "ci_status",
-  description: "Check CI/CD status for the current branch. Shows GitHub Actions run status.",
+  description:
+    "Check CI/CD status for the current branch. Shows GitHub Actions run status.",
   parameters: {
     type: "object",
     properties: {
@@ -26,15 +27,12 @@ export const ciStatusTool: ToolDefinition = {
       };
     }
 
-    const branch = (params["branch"] as string) ?? "";
-
-    let cmd = "run list";
-    cmd += ` --limit ${params["limit"] ?? 5}`;
-    if (branch) {
-      cmd += ` --branch ${branch}`;
+    const ghArgs = ["run", "list", "--limit", String((params["limit"] as number) ?? 5)];
+    if (params["branch"]) {
+      ghArgs.push("--branch", params["branch"] as string);
     }
 
-    return runGh(cmd);
+    return runGh(ghArgs);
   },
 };
 
@@ -66,7 +64,7 @@ export const releasePrepareTool: ToolDefinition = {
     const shouldPush = params["push"] === true;
 
     // Read current version from package.json
-    const pkgResult = await runGit("show HEAD:package.json 2>/dev/null || cat package.json");
+    const pkgResult = await runGit(["show", "HEAD:package.json"]);
     if (pkgResult.isError) {
       return pkgResult;
     }
@@ -95,12 +93,12 @@ export const releasePrepareTool: ToolDefinition = {
     }
 
     // Generate release notes from commits since last tag
-    const tagResult = await runGit("describe --tags --abbrev=0 2>/dev/null");
+    const tagResult = await runGit(["describe", "--tags", "--abbrev=0"]);
     const lastTag = tagResult.isError ? "" : tagResult.content;
 
     const logArgs = lastTag
-      ? `log ${lastTag}..HEAD --oneline --no-merges`
-      : "log --oneline --no-merges -20";
+      ? ["log", `${lastTag}..HEAD`, "--oneline", "--no-merges"]
+      : ["log", "--oneline", "--no-merges", "-20"];
 
     const commitsResult = await runGit(logArgs);
 
@@ -133,8 +131,9 @@ export const releasePrepareTool: ToolDefinition = {
 
     // Create tag if requested
     if (shouldTag) {
-      const tagCmd = `tag -a v${newVersion} -m 'Release v${newVersion}'`;
-      const tagCreateResult = await runGit(tagCmd);
+      const tagCreateResult = await runGit([
+        "tag", "-a", `v${newVersion}`, "-m", `Release v${newVersion}`,
+      ]);
       if (tagCreateResult.isError) {
         return {
           content: `Version bump: ${currentVersion} → ${newVersion}\n\nRelease notes:\n${notes}\n\nError creating tag: ${tagCreateResult.content}`,
@@ -143,7 +142,7 @@ export const releasePrepareTool: ToolDefinition = {
       }
 
       if (shouldPush) {
-        await runGit(`push origin v${newVersion}`);
+        await runGit(["push", "origin", `v${newVersion}`]);
       }
     }
 
