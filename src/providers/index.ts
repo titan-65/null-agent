@@ -153,7 +153,7 @@ export class ProviderError extends Error {
 }
 
 export function detectProvider(): ProviderName | null {
-  // Check which providers have keys configured
+  // Check which providers have keys configured (env vars)
   for (const [name, info] of Object.entries(PROVIDERS)) {
     if (process.env[info.envKey]) {
       return name as ProviderName;
