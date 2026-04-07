@@ -87,6 +87,7 @@ async function saveFileCredentials(credentials: AuthCredentials): Promise<void> 
 export async function loadCredentials(): Promise<AuthCredentials> {
   const credentials: AuthCredentials = {};
 
+  // Load from keychain if available
   if (keytar) {
     try {
       const credentialsList = await keytar.findCredentials(SERVICE_NAME);
@@ -95,16 +96,15 @@ export async function loadCredentials(): Promise<AuthCredentials> {
         credentials[provider] = cred.password;
       }
     } catch {
-      // Keychain error — fall through to file
+      // Keychain not available — continue to file
     }
   }
 
-  if (Object.keys(credentials).length === 0) {
-    const fileCreds = await loadFileCredentials();
-    for (const [provider, key] of Object.entries(fileCreds)) {
-      if (key && !credentials[provider]) {
-        credentials[provider] = key;
-      }
+  // Always merge with file credentials (file acts as fallback)
+  const fileCreds = await loadFileCredentials();
+  for (const [provider, key] of Object.entries(fileCreds)) {
+    if (key && !credentials[provider]) {
+      credentials[provider] = key;
     }
   }
 
@@ -153,18 +153,23 @@ export async function getCredential(provider: string): Promise<string | null> {
 }
 
 export async function setCredential(provider: string, key: string): Promise<void> {
+  let savedToKeychain = false;
+
   if (keytar) {
     try {
       await keytar.setPassword(SERVICE_NAME, `${ACCOUNT_PREFIX}${provider}`, key);
-      return;
+      savedToKeychain = true;
     } catch {
       // Keychain error — fall through to file
     }
   }
 
+  // Always save to file as backup (for fallback if keychain access fails later)
   const credentials = await loadFileCredentials();
   credentials[provider] = key;
   await saveFileCredentials(credentials);
+
+  return;
 }
 
 export async function removeCredential(provider: string): Promise<void> {
