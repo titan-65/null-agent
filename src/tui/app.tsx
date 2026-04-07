@@ -462,6 +462,47 @@ export function App({
         return;
       }
 
+      if (trimmed === "/model") {
+        const model = agent.getModel();
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "system",
+            content: model ? `Current model: ${model}` : "No model set, using default",
+            toolCalls: [],
+            isStreaming: false,
+          },
+        ]);
+        return;
+      }
+
+      if (trimmed.startsWith("/model ")) {
+        const model = trimmed.slice(7).trim();
+        if (model) {
+          agent.setModel(model);
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "system",
+              content: `Model changed to: ${model}`,
+              toolCalls: [],
+              isStreaming: false,
+            },
+          ]);
+        } else {
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "system",
+              content: "Usage: /model <model-name>",
+              toolCalls: [],
+              isStreaming: false,
+            },
+          ]);
+        }
+        return;
+      }
+
       setShowHelp(false);
       setLastActivityTime(Date.now());
 

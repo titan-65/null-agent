@@ -192,6 +192,18 @@ export class Agent {
     this._lastToolUsed = name;
   }
 
+  setModel(model: string): void {
+    this.config.model = model;
+  }
+
+  getModel(): string | undefined {
+    return this.config.model;
+  }
+
+  getProvider(): unknown {
+    return this.config.provider;
+  }
+
   private _lastToolUsed?: string;
 
   private async saveToMemory(): Promise<void> {

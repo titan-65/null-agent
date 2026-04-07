@@ -37,6 +37,8 @@ export function HelpOverlay() {
       h(Shortcut, { k: "/done <id>", d: "Mark a task complete" }),
       h(Shortcut, { k: "/config", d: "Show configuration" }),
       h(Shortcut, { k: "/config <key> <val>", d: "Update config" }),
+      h(Shortcut, { k: "/model", d: "Show current model" }),
+      h(Shortcut, { k: "/model <name>", d: "Change model" }),
       h(Shortcut, { k: "/exit", d: "Exit the assistant" }),
     ),
     h(Text, null, ""),
