@@ -300,9 +300,7 @@ export async function printAuthStatus(): Promise<void> {
     if (envKey) {
       status = `\x1b[32m✓ env (${p.envKey})\x1b[0m`;
     } else if (stored) {
-      status = useKeychain
-        ? `\x1b[32m✓ stored (encrypted)\x1b[0m`
-        : `\x1b[32m✓ stored\x1b[0m`;
+      status = useKeychain ? `\x1b[32m✓ stored (encrypted)\x1b[0m` : `\x1b[32m✓ stored\x1b[0m`;
     } else {
       status = `\x1b[90mnot set\x1b[0m`;
     }

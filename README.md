@@ -90,15 +90,15 @@ null-agent --server --port 3737
 
 ## Providers
 
-null-agent supports 4 LLM providers. Auto-detects which provider has a key configured.
+null-agent supports 5 LLM providers. Auto-detects which provider has a key configured.
 
-| Provider      | Env Variable         | Default Model              | Free Models                     |
-| ------------- | -------------------- | -------------------------- | ------------------------------- |
-| OpenAI        | `OPENAI_API_KEY`     | `gpt-4o`                   | —                               |
-| Anthropic     | `ANTHROPIC_API_KEY`  | `claude-sonnet-4-20250514` | —                               |
-| Google Gemini | `GEMINI_API_KEY`     | `gemini-2.0-flash`         | `gemini-2.0-flash` (free tier)  |
-| OpenRouter    | `OPENROUTER_API_KEY` | `google/gemini-2.0-flash`  | `gemini-2.0-flash`, `llama-3.1` |
-| Tavily        | `TAVILY_API_KEY`     | —                          | 1000 searches/month (free tier) |
+| Provider      | Env Variable         | Default Model                 | Free Models                            |
+| ------------- | -------------------- | ----------------------------- | -------------------------------------- |
+| OpenAI        | `OPENAI_API_KEY`     | `gpt-5.4`                     | —                                      |
+| Anthropic     | `ANTHROPIC_API_KEY`  | `claude-sonnet-4-6`           | —                                      |
+| Google Gemini | `GEMINI_API_KEY`     | `gemini-3.1-flash`            | `gemini-3.1-flash` (free tier)         |
+| OpenRouter    | `OPENROUTER_API_KEY` | `anthropic/claude-sonnet-4-6` | `google/gemini-3.1-flash`, `llama-3.1` |
+| Tavily        | `TAVILY_API_KEY`     | —                             | 1000 searches/month (free tier)        |
 
 ```ts
 import { createProvider, detectProvider, getAvailableProviders } from "null-agent";
@@ -161,7 +161,7 @@ null-agent auth openai
 
 ## Tools
 
-null-agent ships with 28 built-in tools covering file operations, shell execution, git workflows, dev workflows, code review, testing, and web search.
+null-agent ships with 35 built-in tools covering file operations, shell execution, git workflows, dev workflows, code review, testing, and web search.
 
 ### Core Tools
 
@@ -353,7 +353,7 @@ Send a single message and print the response. Good for scripting.
 ```bash
 null-agent "what does this function do?"
 null-agent --provider openai "summarize the changes"
-null-agent --provider gemini --model gemini-2.0-flash "explain git rebase"
+null-agent --provider gemini --model gemini-3.1-flash "explain git rebase"
 ```
 
 ## Configuration
