@@ -1,14 +1,20 @@
+import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { join } from "node:path";
+import { homedir } from "node:os";
 import { createInterface } from "node:readline";
 
 let keytar: typeof import("keytar") | null = null;
 try {
   keytar = await import("keytar");
 } catch {
-  // Keytar not available
+  // Keytar not available — will use file-based fallback
 }
 
 const SERVICE_NAME = "null-agent";
 const ACCOUNT_PREFIX = "api-key-";
+
+const CREDENTIALS_DIR = join(homedir(), ".null-agent");
+const CREDENTIALS_FILE = join(CREDENTIALS_DIR, "credentials.json");
 
 export interface AuthCredentials {
   [provider: string]: string;
@@ -60,36 +66,70 @@ export const AUTH_PROMPTS: AuthPrompt[] = [
   },
 ];
 
+// File-based credential storage (fallback when keytar unavailable)
+
+async function loadFileCredentials(): Promise<AuthCredentials> {
+  try {
+    const data = await readFile(CREDENTIALS_FILE, "utf-8");
+    return JSON.parse(data) as AuthCredentials;
+  } catch {
+    return {};
+  }
+}
+
+async function saveFileCredentials(credentials: AuthCredentials): Promise<void> {
+  await mkdir(CREDENTIALS_DIR, { recursive: true });
+  await writeFile(CREDENTIALS_FILE, JSON.stringify(credentials, null, 2), "utf-8");
+}
+
+// Public API
+
 export async function loadCredentials(): Promise<AuthCredentials> {
   const credentials: AuthCredentials = {};
-  if (!keytar) return credentials;
-  try {
-    const credentialsList = await keytar.findCredentials(SERVICE_NAME);
-    for (const cred of credentialsList) {
-      const provider = cred.account.replace(ACCOUNT_PREFIX, "");
-      credentials[provider] = cred.password;
+
+  if (keytar) {
+    try {
+      const credentialsList = await keytar.findCredentials(SERVICE_NAME);
+      for (const cred of credentialsList) {
+        const provider = cred.account.replace(ACCOUNT_PREFIX, "");
+        credentials[provider] = cred.password;
+      }
+    } catch {
+      // Keychain error — fall through to file
     }
-  } catch {
-    // Keychain not available
   }
+
+  if (Object.keys(credentials).length === 0) {
+    const fileCreds = await loadFileCredentials();
+    for (const [provider, key] of Object.entries(fileCreds)) {
+      if (key && !credentials[provider]) {
+        credentials[provider] = key;
+      }
+    }
+  }
+
   return credentials;
 }
 
 export async function saveCredentials(credentials: AuthCredentials): Promise<void> {
-  if (!keytar) return;
-  try {
-    const existing = await keytar.findCredentials(SERVICE_NAME);
-    for (const cred of existing) {
-      await keytar.deletePassword(SERVICE_NAME, cred.account);
-    }
-    for (const [provider, key] of Object.entries(credentials)) {
-      if (key) {
-        await keytar.setPassword(SERVICE_NAME, `${ACCOUNT_PREFIX}${provider}`, key);
+  if (keytar) {
+    try {
+      const existing = await keytar.findCredentials(SERVICE_NAME);
+      for (const cred of existing) {
+        await keytar.deletePassword(SERVICE_NAME, cred.account);
       }
+      for (const [provider, key] of Object.entries(credentials)) {
+        if (key) {
+          await keytar.setPassword(SERVICE_NAME, `${ACCOUNT_PREFIX}${provider}`, key);
+        }
+      }
+      return;
+    } catch {
+      // Keychain error — fall through to file
     }
-  } catch {
-    // Keychain not available
   }
+
+  await saveFileCredentials(credentials);
 }
 
 export async function getCredential(provider: string): Promise<string | null> {
@@ -99,30 +139,51 @@ export async function getCredential(provider: string): Promise<string | null> {
     if (envValue) return envValue;
   }
 
-  if (!keytar) return null;
-  try {
-    return await keytar.getPassword(SERVICE_NAME, `${ACCOUNT_PREFIX}${provider}`);
-  } catch {
-    return null;
+  if (keytar) {
+    try {
+      const key = await keytar.getPassword(SERVICE_NAME, `${ACCOUNT_PREFIX}${provider}`);
+      if (key) return key;
+    } catch {
+      // Keychain error — fall through to file
+    }
   }
+
+  const fileCreds = await loadFileCredentials();
+  return fileCreds[provider] ?? null;
 }
 
 export async function setCredential(provider: string, key: string): Promise<void> {
-  if (!keytar) return;
-  try {
-    await keytar.setPassword(SERVICE_NAME, `${ACCOUNT_PREFIX}${provider}`, key);
-  } catch {
-    // Keychain not available
+  if (keytar) {
+    try {
+      await keytar.setPassword(SERVICE_NAME, `${ACCOUNT_PREFIX}${provider}`, key);
+      return;
+    } catch {
+      // Keychain error — fall through to file
+    }
   }
+
+  const credentials = await loadFileCredentials();
+  credentials[provider] = key;
+  await saveFileCredentials(credentials);
 }
 
 export async function removeCredential(provider: string): Promise<void> {
-  if (!keytar) return;
-  try {
-    await keytar.deletePassword(SERVICE_NAME, `${ACCOUNT_PREFIX}${provider}`);
-  } catch {
-    // Keychain not available
+  if (keytar) {
+    try {
+      await keytar.deletePassword(SERVICE_NAME, `${ACCOUNT_PREFIX}${provider}`);
+      return;
+    } catch {
+      // Keychain error — fall through to file
+    }
   }
+
+  const credentials = await loadFileCredentials();
+  delete credentials[provider];
+  await saveFileCredentials(credentials);
+}
+
+export function isKeychainAvailable(): boolean {
+  return keytar !== null;
 }
 
 export async function interactiveAuth(provider?: string): Promise<void> {
@@ -144,8 +205,14 @@ export async function interactiveAuth(provider?: string): Promise<void> {
       rl.question(question, resolve);
     });
 
+  const useKeychain = isKeychainAvailable();
+
   console.log("\n  null-agent — Configure API Keys\n");
-  console.log("  Keys are stored securely in the OS keychain.\n");
+  console.log(
+    useKeychain
+      ? "  Keys are stored securely in the OS keychain.\n"
+      : "  Keys are stored in ~/.null-agent/credentials.json (plaintext).\n",
+  );
 
   // If no provider specified, let user choose
   let selectedPrompts = prompts;
@@ -192,7 +259,8 @@ export async function interactiveAuth(provider?: string): Promise<void> {
 
     if (key.trim()) {
       await setCredential(p.provider, key.trim());
-      console.log(`  \x1b[32m✓ Saved ${p.displayName} key (encrypted)\x1b[0m`);
+      const storageMsg = useKeychain ? "(encrypted)" : "";
+      console.log(`  \x1b[32m✓ Saved ${p.displayName} key ${storageMsg}\x1b[0m`);
 
       // Also set in current process env
       process.env[p.envKey] = key.trim();
@@ -201,13 +269,23 @@ export async function interactiveAuth(provider?: string): Promise<void> {
     }
   }
 
-  console.log("\n  Done. Keys are stored securely in the OS keychain.\n");
+  console.log(
+    useKeychain
+      ? "\n  Done. Keys are stored securely in the OS keychain.\n"
+      : "\n  Done. Keys are stored in ~/.null-agent/credentials.json.\n",
+  );
   rl.close();
 }
 
 export async function printAuthStatus(): Promise<void> {
+  const useKeychain = isKeychainAvailable();
+
   console.log("\n  null-agent — API Key Status\n");
-  console.log("  Keys are stored securely in the OS keychain.\n");
+  console.log(
+    useKeychain
+      ? "  Keys are stored securely in the OS keychain.\n"
+      : "  Keys are stored in ~/.null-agent/credentials.json (plaintext).\n",
+  );
 
   for (const p of AUTH_PROMPTS) {
     const envKey = process.env[p.envKey];
@@ -217,7 +295,9 @@ export async function printAuthStatus(): Promise<void> {
     if (envKey) {
       status = `\x1b[32m✓ env (${p.envKey})\x1b[0m`;
     } else if (stored) {
-      status = `\x1b[32m✓ stored (encrypted)\x1b[0m`;
+      status = useKeychain
+        ? `\x1b[32m✓ stored (encrypted)\x1b[0m`
+        : `\x1b[32m✓ stored\x1b[0m`;
     } else {
       status = `\x1b[90mnot set\x1b[0m`;
     }
