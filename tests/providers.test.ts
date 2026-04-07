@@ -184,7 +184,7 @@ describe("OpenAIProvider streaming", () => {
     for await (const _ of provider.chat([{ role: "user", content: "test" }])) {
     }
 
-    expect(capturedBody).toContain("gpt-4o");
+    expect(capturedBody).toContain("gpt-5.4");
   });
 
   test("uses custom model when specified", async () => {

@@ -177,8 +177,8 @@ function printNoProviderError(): void {
     export OPENROUTER_API_KEY='...'     (free models available)
 
   Free options:
-    • Google Gemini — free tier with gemini-2.0-flash
-    • OpenRouter — free models like gemini-2.0-flash, llama-3.1
+    • Google Gemini — free tier with gemini-3.1-flash
+    • OpenRouter — free models like gemma-3-27b, llama-3.3-70b
 
   Get a free Gemini key:  https://aistudio.google.com/apikey
   Get a free OpenRouter key: https://openrouter.ai/keys

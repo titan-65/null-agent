@@ -10,7 +10,7 @@ export class OpenAIProvider extends BaseProvider {
     super();
     this.apiKey = options?.apiKey ?? process.env["OPENAI_API_KEY"] ?? "";
     this.baseUrl = options?.baseUrl ?? "https://api.openai.com/v1/chat/completions";
-    this.defaultModel = options?.model ?? "gpt-4o";
+    this.defaultModel = options?.model ?? "gpt-5.4";
   }
 
   async *chat(messages: Message[], options?: ChatOptions): AsyncIterable<StreamChunk> {

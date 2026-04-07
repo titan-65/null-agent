@@ -33,18 +33,21 @@ export class ContextManager {
 
   budgetForModel(model: string): ContextConfig {
     const budgets: Record<string, Partial<ContextConfig>> = {
-      "gpt-4o": { maxTokens: 128_000 },
+      "gpt-5.4": { maxTokens: 1_000_000 },
+      "gpt-5.4-mini": { maxTokens: 400_000 },
+      "gpt-5.4-nano": { maxTokens: 400_000 },
       "gpt-4.1": { maxTokens: 1_048_576 },
       "gpt-4.1-mini": { maxTokens: 1_048_576 },
-      o3: { maxTokens: 200_000 },
-      "o3-mini": { maxTokens: 200_000 },
-      "o4-mini": { maxTokens: 200_000 },
-      "claude-sonnet-4-20250514": { maxTokens: 200_000 },
-      "claude-opus-4-20250514": { maxTokens: 200_000 },
-      "claude-haiku-35-20241022": { maxTokens: 200_000 },
-      "gemini-2.0-flash": { maxTokens: 1_048_576 },
-      "gemini-2.5-pro-preview-05-06": { maxTokens: 1_048_576 },
-      "gemini-2.5-flash-preview-04-17": { maxTokens: 1_048_576 },
+      "claude-sonnet-4-6": { maxTokens: 1_000_000 },
+      "claude-opus-4-6": { maxTokens: 1_000_000 },
+      "claude-haiku-4-5": { maxTokens: 200_000 },
+      "gemini-3.1-flash": { maxTokens: 1_048_576 },
+      "gemini-2.5-pro": { maxTokens: 1_048_576 },
+      "gemini-2.5-flash-lite": { maxTokens: 1_048_576 },
+      "anthropic/claude-sonnet-4-6": { maxTokens: 1_000_000 },
+      "openai/gpt-5.4": { maxTokens: 1_000_000 },
+      "google/gemini-3.1-flash": { maxTokens: 1_048_576 },
+      "deepseek/deepseek-v3.2": { maxTokens: 128_000 },
     };
 
     return { ...this.config, ...budgets[model] };

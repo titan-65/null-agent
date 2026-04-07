@@ -103,14 +103,14 @@ function getProviderFromEnv(): ProviderName {
 function getDefaultModel(provider: ProviderName): string {
   switch (provider) {
     case "openai":
-      return "gpt-4o";
+      return "gpt-5.4";
     case "anthropic":
-      return "claude-sonnet-4-20250514";
+      return "claude-sonnet-4-6";
     case "gemini":
-      return "gemini-2.0-flash";
+      return "gemini-3.1-flash";
     case "openrouter":
-      return "google/gemini-2.0-flash-001";
+      return "anthropic/claude-sonnet-4-6";
     default:
-      return "gpt-4o";
+      return "gpt-5.4";
   }
 }

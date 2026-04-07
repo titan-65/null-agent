@@ -10,7 +10,7 @@ export class AnthropicProvider extends BaseProvider {
     super();
     this.apiKey = options?.apiKey ?? process.env["ANTHROPIC_API_KEY"] ?? "";
     this.baseUrl = options?.baseUrl ?? "https://api.anthropic.com/v1/messages";
-    this.defaultModel = options?.model ?? "claude-sonnet-4-20250514";
+    this.defaultModel = options?.model ?? "claude-sonnet-4-6";
   }
 
   async *chat(messages: Message[], options?: ChatOptions): AsyncIterable<StreamChunk> {
