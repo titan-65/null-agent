@@ -239,6 +239,17 @@ export function updateConversation(conversation: Conversation, messages: Message
   };
 }
 
+export function updateConversationModel(conversation: Conversation, model: string): Conversation {
+  return {
+    ...conversation,
+    updatedAt: new Date().toISOString(),
+    metadata: {
+      ...conversation.metadata,
+      model,
+    },
+  };
+}
+
 function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }

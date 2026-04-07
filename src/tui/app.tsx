@@ -17,6 +17,7 @@ import type { ConversationSummary } from "../memory/types.ts";
 import type { ProjectKnowledge } from "../context/types.ts";
 import type { AwarenessManager } from "../awareness/manager.ts";
 import type { AwarenessEvent } from "../awareness/types.ts";
+import { PROVIDERS } from "../providers/index.ts";
 import { detectProjectContext, type ProjectContext } from "./context.ts";
 
 export interface TuiMessage {
@@ -462,13 +463,35 @@ export function App({
         return;
       }
 
-      if (trimmed === "/model") {
-        const model = agent.getModel();
+      if (trimmed === "/model" || trimmed === "/models") {
+        const currentModel = agent.getModel();
+        const providerName = agent.getProviderName();
+        const providerInfo = providerName
+          ? PROVIDERS[providerName as keyof typeof PROVIDERS]
+          : null;
+        const models = providerInfo?.models ?? [];
+        const freeModels = providerInfo?.freeModels ?? [];
+
+        let content = currentModel
+          ? `Current model: ${currentModel}\n`
+          : "No model set, using default\n";
+        content += `\nAvailable models for ${providerInfo?.displayName ?? "unknown provider"}:\n`;
+        for (const m of models) {
+          content += `  • ${m}${m === currentModel ? " (current)" : ""}\n`;
+        }
+        if (freeModels.length > 0) {
+          content += `\nFree models:\n`;
+          for (const m of freeModels) {
+            content += `  • ${m}\n`;
+          }
+        }
+        content += `\nUse /model <name> to change`;
+
         setMessages((prev) => [
           ...prev,
           {
             role: "system",
-            content: model ? `Current model: ${model}` : "No model set, using default",
+            content,
             toolCalls: [],
             isStreaming: false,
           },
@@ -479,7 +502,7 @@ export function App({
       if (trimmed.startsWith("/model ")) {
         const model = trimmed.slice(7).trim();
         if (model) {
-          agent.setModel(model);
+          await agent.setModel(model);
           setMessages((prev) => [
             ...prev,
             {
@@ -494,7 +517,7 @@ export function App({
             ...prev,
             {
               role: "system",
-              content: "Usage: /model <model-name>",
+              content: "Usage: /model <model-name>\nUse /models to see available models",
               toolCalls: [],
               isStreaming: false,
             },

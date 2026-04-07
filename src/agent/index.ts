@@ -2,7 +2,12 @@ import type { Message } from "../providers/types.ts";
 import type { AgentCallbacks, AgentConfig, AgentResult } from "./types.ts";
 import { runAgent } from "./loop.ts";
 import { Orchestrator } from "./orchestrator.ts";
-import { type Conversation, createConversation, updateConversation } from "../memory/store.ts";
+import {
+  type Conversation,
+  createConversation,
+  updateConversation,
+  updateConversationModel,
+} from "../memory/store.ts";
 import { type Task, createTask, extractTasks, markTaskDone } from "./tasks.ts";
 import { createSpawnTool } from "../tools/spawn.ts";
 import { AgentEventEmitter, createAgentEvent, type AgentEventHandlers } from "./events.ts";
@@ -192,12 +197,20 @@ export class Agent {
     this._lastToolUsed = name;
   }
 
-  setModel(model: string): void {
+  async setModel(model: string): Promise<void> {
     this.config.model = model;
+    if (this.conversation && this.config.memory) {
+      this.conversation = updateConversationModel(this.conversation, model);
+      await this.config.memory.saveConversation(this.conversation);
+    }
   }
 
   getModel(): string | undefined {
     return this.config.model;
+  }
+
+  getProviderName(): string | undefined {
+    return this.conversation?.metadata.provider;
   }
 
   getProvider(): unknown {

@@ -5,4 +5,9 @@ export type {
   ConversationSearchResult,
   SearchOptions,
 } from "./types.ts";
-export { MemoryStore, createConversation, updateConversation } from "./store.ts";
+export {
+  MemoryStore,
+  createConversation,
+  updateConversation,
+  updateConversationModel,
+} from "./store.ts";

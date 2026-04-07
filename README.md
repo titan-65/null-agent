@@ -310,6 +310,9 @@ null-agent
 | `/done <id>`          | Mark a task complete       |
 | `/config`             | Show personality config    |
 | `/config tone casual` | Change tone setting        |
+| `/model`              | Show current model         |
+| `/model <name>`       | Change model               |
+| `/models`             | List available models      |
 | `/exit`               | Exit                       |
 
 ### Readline REPL
