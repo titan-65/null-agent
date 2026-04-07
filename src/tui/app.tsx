@@ -502,16 +502,28 @@ export function App({
       if (trimmed.startsWith("/model ")) {
         const model = trimmed.slice(7).trim();
         if (model) {
-          await agent.setModel(model);
-          setMessages((prev) => [
-            ...prev,
-            {
-              role: "system",
-              content: `Model changed to: ${model}`,
-              toolCalls: [],
-              isStreaming: false,
-            },
-          ]);
+          try {
+            await agent.setModel(model);
+            setMessages((prev) => [
+              ...prev,
+              {
+                role: "system",
+                content: `Model changed to: ${model}`,
+                toolCalls: [],
+                isStreaming: false,
+              },
+            ]);
+          } catch (error) {
+            setMessages((prev) => [
+              ...prev,
+              {
+                role: "system",
+                content: `Failed to change model: ${error instanceof Error ? error.message : String(error)}`,
+                toolCalls: [],
+                isStreaming: false,
+              },
+            ]);
+          }
         } else {
           setMessages((prev) => [
             ...prev,

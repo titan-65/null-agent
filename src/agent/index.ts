@@ -124,6 +124,9 @@ export class Agent {
     if (existing) {
       this.conversation = existing;
       this.history = [...existing.messages];
+      if (existing.metadata.model) {
+        this.config.model = existing.metadata.model;
+      }
       return existing;
     }
 
@@ -147,6 +150,9 @@ export class Agent {
     if (existing) {
       this.conversation = existing;
       this.history = [...existing.messages];
+      if (existing.metadata.model) {
+        this.config.model = existing.metadata.model;
+      }
       return existing;
     }
 
@@ -200,8 +206,12 @@ export class Agent {
   async setModel(model: string): Promise<void> {
     this.config.model = model;
     if (this.conversation && this.config.memory) {
-      this.conversation = updateConversationModel(this.conversation, model);
-      await this.config.memory.saveConversation(this.conversation);
+      try {
+        this.conversation = updateConversationModel(this.conversation, model);
+        await this.config.memory.saveConversation(this.conversation);
+      } catch (error) {
+        console.error("Failed to save model change to memory:", error);
+      }
     }
   }
 
