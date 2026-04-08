@@ -1,6 +1,6 @@
 {
   "name": "null-agent",
-  "version": "0.2.10",
+  "version": "0.3.0",
   "description": "Interactive coding assistant library with multi-provider LLM support, tool system, and multi-agent orchestration.",
   "keywords": [
     "agent",
