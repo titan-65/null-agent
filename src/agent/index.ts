@@ -68,10 +68,10 @@ export class Agent {
 
     await this.eventEmitter.waitForSettled();
 
-    this.history.push({ role: "user", content: message });
-    if (result.content) {
-      this.history.push({ role: "assistant", content: result.content });
+    // Use the full history from runAgent which includes tool results
+    this.history = result.history;
 
+    if (result.content) {
       const extractedTasks = extractTasks(result.content);
       for (const desc of extractedTasks) {
         if (!this.tasks.some((t) => t.description === desc && t.status !== "done")) {

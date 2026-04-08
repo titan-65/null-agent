@@ -138,6 +138,7 @@ export async function runAgent(
     content: fullResponse,
     iterations,
     toolCalls,
+    history: currentHistory,
   };
 }
 

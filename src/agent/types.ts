@@ -28,6 +28,7 @@ export interface AgentResult {
   content: string;
   iterations: number;
   toolCalls: Array<{ name: string; arguments: Record<string, unknown> }>;
+  history: Message[];
 }
 
 export interface AgentCallbacks {
