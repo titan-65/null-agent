@@ -1,12 +1,12 @@
 # null-agent
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.1.0-blue?style=for-the-badge" alt="Version" />
+  <img src="https://img.shields.io/badge/version-0.3.0-blue?style=for-the-badge" alt="Version" />
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License" />
   <img src="https://img.shields.io/badge/node-%3E%3D20.19-brightgreen?style=for-the-badge&logo=node.js" alt="Node" />
   <img src="https://img.shields.io/badge/typescript-6.0-blue?style=for-the-badge&logo=typescript" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/tests-38%2F38%20passing-brightgreen?style=for-the-badge" alt="Tests" />
-  <img src="https://img.shields.io/badge/tools-35%20built--in-orange?style=for-the-badge" alt="Tools" />
+  <img src="https://img.shields.io/badge/tests-144%2F144%20passing-brightgreen?style=for-the-badge" alt="Tests" />
+  <img src="https://img.shields.io/badge/tools-41%20built--in-orange?style=for-the-badge" alt="Tools" />
   <img src="https://img.shields.io/badge/providers-5%20LLMs-purple?style=for-the-badge" alt="Providers" />
   <img src="https://img.shields.io/badge/build-passing-success?style=for-the-badge&logo=vite" alt="Build" />
 </p>
@@ -161,15 +161,31 @@ null-agent auth openai
 
 ## Tools
 
-null-agent ships with 35 built-in tools covering file operations, shell execution, git workflows, dev workflows, code review, testing, and web search.
+null-agent ships with 41 built-in tools covering file operations, shell execution, git workflows, dev workflows, code review, testing, and web search.
 
 ### Core Tools
 
-| Tool            | Name         | Description                                  |
-| --------------- | ------------ | -------------------------------------------- |
-| `fileReadTool`  | `file_read`  | Read file contents                           |
-| `fileWriteTool` | `file_write` | Write file contents (creates parent dirs)    |
-| `shellTool`     | `shell`      | Run shell commands (30s timeout, 1MB buffer) |
+| Tool              | Name           | Description                                      |
+| ----------------- | -------------- | ------------------------------------------------ |
+| `fileReadTool`    | `file_read`    | Read file contents                               |
+| `fileWriteTool`   | `file_write`   | Write file contents (creates parent dirs)        |
+| `fileMoveTool`    | `file_move`    | Move files with undo support                     |
+| `fileCopyTool`    | `file_copy`    | Copy files                                      |
+| `fileDeleteTool`  | `file_delete`  | Delete files (moves to trash, supports restore)  |
+| `fileGlobTool`    | `file_glob`    | Find files matching glob patterns               |
+| `fileRestoreTool` | `file_restore` | List/restore files from trash                   |
+| `fileBulkTool`    | `file_bulk`    | Execute batch file operations                    |
+| `shellTool`       | `shell`        | Run shell commands (30s timeout, 1MB buffer)     |
+
+### File Manipulation Features
+
+**Root Boundary Security:** All file operations validate paths against a configurable root boundary (default: project root) to prevent path traversal attacks.
+
+**Trash-Based Deletion:** Files deleted via `file_delete` are moved to `~/.null-agent/trash/` instead of permanent deletion. Use `file_restore` to recover files.
+
+**Glob Patterns:** `file_glob` supports patterns like `**/*.ts`, `src/**/*.js`, with automatic exclusion of `node_modules/` and `.git/`.
+
+**Bulk Operations:** `file_bulk` executes multiple move/copy/delete operations in batch with partial failure handling.
 
 ### Git Tools
 
