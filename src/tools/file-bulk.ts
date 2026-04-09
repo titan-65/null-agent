@@ -70,7 +70,10 @@ export const fileBulkTool: ToolDefinition = {
             result = await fileDeleteTool.execute({ path: op.path, rootBoundary });
             break;
           default:
-            result = { content: `Unknown operation type: ${(op as { type: string }).type}`, isError: true };
+            result = {
+              content: `Unknown operation type: ${(op as { type: string }).type}`,
+              isError: true,
+            };
         }
 
         results.push({
