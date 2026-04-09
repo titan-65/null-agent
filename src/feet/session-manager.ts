@@ -66,6 +66,8 @@ export class SessionManager {
         cwd: session.cwd,
       });
 
+      this.processes.set(id, child);
+
       let output = "";
 
       child.stdout?.on("data", (data) => {
@@ -76,7 +78,12 @@ export class SessionManager {
         output += data.toString();
       });
 
+      child.on("error", (err) => {
+        resolve({ output: `Error: ${err.message}`, exitCode: 1 });
+      });
+
       child.on("close", (code) => {
+        this.processes.delete(id);
         resolve({ output, exitCode: code ?? undefined });
       });
     });
