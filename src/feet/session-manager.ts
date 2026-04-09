@@ -89,3 +89,5 @@ export class SessionManager {
     });
   }
 }
+
+export const globalSessionManager = new SessionManager();
