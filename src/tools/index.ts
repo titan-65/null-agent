@@ -40,6 +40,7 @@ export { fileDeleteTool } from "./file-delete.ts";
 export { fileGlobTool } from "./file-glob.ts";
 export { fileRestoreTool } from "./file-restore.ts";
 export { fileBulkTool } from "./file-bulk.ts";
+export { taskSprintTool } from "./task-sprint.ts";
 export type { TrashEntry } from "./trash.ts";
 
 import { fileReadTool } from "./file-read.ts";
