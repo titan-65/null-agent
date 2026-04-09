@@ -1,8 +1,8 @@
 import type { ToolDefinition } from "./types.ts";
 import { String, Optional, toolParams } from "./schema.ts";
-import { ProcessManager } from "../feet/process-manager.ts";
+import { getProcessManager } from "../feet/process-manager.ts";
 
-const processManager = new ProcessManager();
+const processManager = getProcessManager();
 
 export const processStartTool: ToolDefinition = {
   name: "process_start",

@@ -23,6 +23,19 @@ export interface StopResult {
   signal?: string;
 }
 
+let _instance: ProcessManager | null = null;
+
+export function getProcessManager(): ProcessManager {
+  if (!_instance) {
+    _instance = new ProcessManager();
+  }
+  return _instance;
+}
+
+export function resetProcessManager(): void {
+  _instance = null;
+}
+
 export class ProcessManager {
   private processes = new Map<string, ManagedProcess>();
   private childProcesses = new Map<string, ChildProcess>();
