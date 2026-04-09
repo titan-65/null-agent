@@ -49,7 +49,7 @@ export const fileBulkTool: ToolDefinition = {
 
     for (const op of operations) {
       try {
-        let result;
+        let result: { content: string; isError?: boolean } = { content: "" };
 
         switch (op.type) {
           case "move":
@@ -69,6 +69,8 @@ export const fileBulkTool: ToolDefinition = {
           case "delete":
             result = await fileDeleteTool.execute({ path: op.path, rootBoundary });
             break;
+          default:
+            result = { content: `Unknown operation type: ${(op as { type: string }).type}`, isError: true };
         }
 
         results.push({
