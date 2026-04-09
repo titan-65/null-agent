@@ -34,6 +34,13 @@ export {
   workflowTools,
 } from "./workflow/index.ts";
 export { webSearchTool, webFetchTool } from "./web.ts";
+export { fileMoveTool } from "./file-move.ts";
+export { fileCopyTool } from "./file-copy.ts";
+export { fileDeleteTool } from "./file-delete.ts";
+export { fileGlobTool } from "./file-glob.ts";
+export { fileRestoreTool } from "./file-restore.ts";
+export { fileBulkTool } from "./file-bulk.ts";
+export type { TrashEntry } from "./trash.ts";
 
 import { fileReadTool } from "./file-read.ts";
 import { fileWriteTool } from "./file-write.ts";
@@ -43,6 +50,12 @@ import { workflowTools } from "./workflow/index.ts";
 import { reviewTool } from "./review.ts";
 import { generateTestTool, runTestTool, fixTestTool, coverageTool } from "./testing.ts";
 import { webSearchTool, webFetchTool } from "./web.ts";
+import { fileMoveTool } from "./file-move.ts";
+import { fileCopyTool } from "./file-copy.ts";
+import { fileDeleteTool } from "./file-delete.ts";
+import { fileGlobTool } from "./file-glob.ts";
+import { fileRestoreTool } from "./file-restore.ts";
+import { fileBulkTool } from "./file-bulk.ts";
 import { ToolRegistry } from "./registry.ts";
 import type { ToolDefinition } from "./types.ts";
 
@@ -59,6 +72,12 @@ export const builtinTools: ToolDefinition[] = [
   coverageTool,
   webSearchTool,
   webFetchTool,
+  fileMoveTool,
+  fileCopyTool,
+  fileDeleteTool,
+  fileGlobTool,
+  fileRestoreTool,
+  fileBulkTool,
 ];
 
 export function createDefaultRegistry(): ToolRegistry {
