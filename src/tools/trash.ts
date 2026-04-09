@@ -1,6 +1,7 @@
 import { mkdir, rename, readFile, writeFile } from "node:fs/promises";
 import { join, dirname, resolve, basename } from "node:path";
 import { homedir } from "node:os";
+import { randomUUID } from "node:crypto";
 
 const TRASH_DIR_NAME = ".null-agent";
 const TRASH_SUBDIR = "trash";
@@ -24,10 +25,11 @@ export interface TrashEntry {
   trashPath: string;
   timestamp: number;
   operation: "move" | "delete";
+  rootBoundary: string;
 }
 
 function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2);
+  return randomUUID();
 }
 
 async function ensureTrashDir(): Promise<string> {
@@ -51,7 +53,12 @@ async function writeUndoLog(entries: TrashEntry[]): Promise<void> {
   await writeFile(getUndoFile(), JSON.stringify(entries, null, 2), "utf-8");
 }
 
-export async function moveToTrash(filePath: string, rootBoundary: string): Promise<TrashEntry> {
+export type MoveToTrashResult = TrashEntry | { isError: true; content: string };
+
+export async function moveToTrash(
+  filePath: string,
+  rootBoundary: string,
+): Promise<MoveToTrashResult> {
   const resolvedPath = resolve(filePath);
   const resolvedBoundary = resolve(rootBoundary);
 
@@ -59,7 +66,7 @@ export async function moveToTrash(filePath: string, rootBoundary: string): Promi
     return {
       isError: true,
       content: `Path ${filePath} is outside root boundary ${rootBoundary}`,
-    } as any;
+    };
   }
 
   const trashDir = await ensureTrashDir();
@@ -67,7 +74,14 @@ export async function moveToTrash(filePath: string, rootBoundary: string): Promi
   const fileName = basename(filePath);
   const trashPath = join(trashDir, `${id}_${fileName}`);
 
-  await rename(filePath, trashPath);
+  try {
+    await rename(filePath, trashPath);
+  } catch (err) {
+    return {
+      isError: true,
+      content: `Failed to move file to trash: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
 
   const entry: TrashEntry = {
     id,
@@ -75,6 +89,7 @@ export async function moveToTrash(filePath: string, rootBoundary: string): Promi
     trashPath,
     timestamp: Date.now(),
     operation: "delete",
+    rootBoundary: resolvedBoundary,
   };
 
   const entries = await readUndoLog();
@@ -101,8 +116,31 @@ export async function restore(
     };
   }
 
-  await mkdir(dirname(entry.originalPath), { recursive: true });
-  await rename(trashPath, entry.originalPath);
+  const resolvedOriginalPath = resolve(entry.originalPath);
+  if (!resolvedOriginalPath.startsWith(entry.rootBoundary)) {
+    return {
+      isError: true,
+      content: `Cannot restore: original path ${entry.originalPath} is outside the root boundary ${entry.rootBoundary}`,
+    };
+  }
+
+  try {
+    await mkdir(dirname(entry.originalPath), { recursive: true });
+  } catch (err) {
+    return {
+      isError: true,
+      content: `Failed to create original directory: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+
+  try {
+    await rename(trashPath, entry.originalPath);
+  } catch (err) {
+    return {
+      isError: true,
+      content: `Failed to restore file: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
 
   const updatedEntries = entries.filter((e) => e.id !== entry.id);
   await writeUndoLog(updatedEntries);

@@ -31,6 +31,9 @@ test("moveToTrash creates trash entry and moves file", async () => {
   await writeFile(testFile, fileContent, "utf-8");
 
   const entry = await moveToTrash(testFile, TEST_ROOT);
+  if (entry.isError) {
+    throw new Error("moveToTrash failed: " + entry.content);
+  }
 
   expect(entry.originalPath).toBe(testFile);
   expect(entry.trashPath).toContain(TRASH_DIR);
@@ -82,6 +85,9 @@ test("restore returns file to original path and removes from log", async () => {
   await writeFile(testFile, fileContent, "utf-8");
 
   const entry = await moveToTrash(testFile, TEST_ROOT);
+  if (entry.isError) {
+    throw new Error("moveToTrash failed: " + entry.content);
+  }
 
   const restoredPath = await restore(entry.trashPath);
 
@@ -100,4 +106,34 @@ test("restore throws when entry not found", async () => {
 
   expect(result.isError).toBe(true);
   expect(result.content).toContain("not found");
+});
+
+test("moveToTrash returns error for non-existent file", async () => {
+  const nonExistentFile = join(TEST_ROOT, "does-not-exist.txt");
+
+  const result = await moveToTrash(nonExistentFile, TEST_ROOT);
+
+  expect(result.isError).toBe(true);
+  expect(result.content).toContain("Failed to move file to trash");
+});
+
+test("restore returns error when original directory cannot be created", async () => {
+  const subdirPath = join(TEST_ROOT, "subdir");
+  await mkdir(subdirPath, { recursive: true });
+  const testFile = join(subdirPath, "file-to-restore.txt");
+  const fileContent = "test content";
+  await writeFile(testFile, fileContent, "utf-8");
+
+  const entry = await moveToTrash(testFile, TEST_ROOT);
+  if (entry.isError) {
+    throw new Error("moveToTrash failed");
+  }
+
+  await rm(subdirPath, { recursive: true, force: true });
+  await writeFile(subdirPath, "make this a file not a directory");
+
+  const result = await restore(entry.trashPath);
+
+  expect(result.isError).toBe(true);
+  expect(result.content).toContain("Failed to create original directory");
 });
