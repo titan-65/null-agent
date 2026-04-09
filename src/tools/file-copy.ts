@@ -39,9 +39,10 @@ export const fileCopyTool: ToolDefinition = {
         : resolve(rootBoundary, destination);
       const resolvedBoundary = resolve(rootBoundary);
 
+      const normalizedBoundary = resolvedBoundary + "/";
       if (
-        !resolvedSource.startsWith(resolvedBoundary) ||
-        !resolvedDest.startsWith(resolvedBoundary)
+        !resolvedSource.startsWith(normalizedBoundary) ||
+        !resolvedDest.startsWith(normalizedBoundary)
       ) {
         return { content: `Error: Path is outside root boundary ${rootBoundary}`, isError: true };
       }
