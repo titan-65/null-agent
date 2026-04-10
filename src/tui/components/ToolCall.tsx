@@ -91,22 +91,22 @@ function getToolDescription(toolCall: ToolCallData): string {
 }
 
 function formatResult(toolName: string, result: string): string {
-  const firstLine = result.split("\n")[0] ?? "";
+  const lines = result.split("\n");
+  const firstLine = lines[0] ?? "";
+  const lineCount = lines.length;
 
   switch (toolName) {
     case "file_read": {
-      const lineCount = result.split("\n").length;
       return `${lineCount} lines`;
     }
     case "file_write":
       return firstLine;
     case "shell":
-      return truncate(firstLine, 70);
+      return formatShellResult(result);
     case "git_status":
     case "git_diff":
     case "git_log":
     case "git_branch": {
-      const lineCount = result.split("\n").length;
       return `${lineCount} lines`;
     }
     case "git_add":
@@ -116,6 +116,14 @@ function formatResult(toolName: string, result: string): string {
     default:
       return truncate(firstLine, 70);
   }
+}
+
+function formatShellResult(result: string): string {
+  const lines = result.split("\n").filter((l) => l.trim());
+  if (lines.length === 0) return "(no output)";
+  if (lines.length === 1) return lines[0]!;
+  if (lines.length <= 6) return lines.join(" · ");
+  return `${lines.slice(0, 5).join(" · ")} · +${lines.length - 5} more`;
 }
 
 function truncate(str: string, max: number): string {
