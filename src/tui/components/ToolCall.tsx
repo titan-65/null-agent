@@ -122,8 +122,8 @@ function formatShellResult(result: string): string {
   const lines = result.split("\n").filter((l) => l.trim());
   if (lines.length === 0) return "(no output)";
   if (lines.length === 1) return lines[0]!;
-  if (lines.length <= 6) return lines.join(" · ");
-  return `${lines.slice(0, 5).join(" · ")} · +${lines.length - 5} more`;
+  if (lines.length <= 15) return lines.join(" · ");
+  return `${lines.slice(0, 12).join(" · ")} · +${lines.length - 12} more`;
 }
 
 function truncate(str: string, max: number): string {
