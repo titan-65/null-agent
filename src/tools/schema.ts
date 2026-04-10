@@ -25,7 +25,7 @@ export function createToolSchema<T extends TSchema>(schema: T): T {
 }
 
 export const String = Type.String;
-export const Number = Type.Number;
+export const Integer = Type.Number;
 export const Boolean = Type.Boolean;
 export const Object = Type.Object;
 export const Array = Type.Array;

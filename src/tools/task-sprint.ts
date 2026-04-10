@@ -1,5 +1,5 @@
 import type { ToolDefinition } from "./types.ts";
-import { String, Number, Optional, toolParams } from "./schema.ts";
+import { String, Integer, Optional, toolParams } from "./schema.ts";
 
 export const taskSprintTool: ToolDefinition = {
   name: "task_sprint",
@@ -16,7 +16,7 @@ export const taskSprintTool: ToolDefinition = {
   typeboxSchema: toolParams(
     {
       task: String({ description: "Task description" }),
-      timeout: Number({ description: "Timeout in seconds" }),
+      timeout: Integer({ description: "Timeout in seconds" }),
       goal: Optional(String({ description: "Optional explicit goal" })),
     },
     ["task", "timeout"],

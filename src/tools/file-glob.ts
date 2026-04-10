@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { glob } from "tinyglobby";
 import type { ToolDefinition } from "./types.ts";
-import { String, Object, Optional, Array, toolParams } from "./schema.ts";
+import { String, Object, Optional, Array, Integer, toolParams } from "./schema.ts";
 
 const DEFAULT_IGNORE = ["node_modules/**", ".git/**"];
 
@@ -38,7 +38,7 @@ export const fileGlobTool: ToolDefinition = {
       options: Optional(
         Object({
           ignore: Array(String()),
-          limit: Number(),
+          limit: Integer(),
         }),
       ),
     },
