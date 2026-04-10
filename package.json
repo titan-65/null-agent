@@ -2,5 +2,6 @@
   "name": "test-project",
   "scripts": {
     "test": "vitest"
-  }
+  },
+  "version": "0.1.0"
 }
