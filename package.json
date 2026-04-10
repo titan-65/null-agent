@@ -2,6 +2,10 @@
   "name": "null-agent",
   "version": "0.4.0",
   "description": "Interactive coding assistant library",
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
@@ -16,13 +20,9 @@
       "import": "./dist/testing/index.js"
     }
   },
-  "files": [
-    "dist"
-  ],
   "scripts": {
     "build": "vp pack",
     "test": "vp test",
     "check": "vp check"
-  },
-  "license": "MIT"
+  }
 }

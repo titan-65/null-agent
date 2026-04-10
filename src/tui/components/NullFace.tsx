@@ -1,5 +1,5 @@
 import { createElement as h } from "react";
-import { Text } from "ink";
+import { Text, Box } from "ink";
 
 export type NullMood =
   | "idle"
@@ -17,64 +17,126 @@ export type NullMood =
 interface NullFaceProps {
   mood: NullMood;
   frame: number;
+  isBlinking?: boolean;
 }
 
-// Null's face — animated expressions for different states
-const FACES: Record<NullMood, string[]> = {
-  // Calm, relaxed — default state
-  idle: [" ◡ ", " ◠ ", " ◡ ", " ◠ ", " ◡ ", " ≡ ", " ◡ ", " ◠ "],
+interface MoodConfig {
+  eyes: string[];
+  mouth: string[];
+  body: string[];
+  color: string;
+}
 
-  // Curious, pondering — processing a request
-  thinking: [" ◡?", " ◠?", " ◡~", " ◠~", " ◡?", " ≡~", " ◡?", " ◠?"],
-
-  // Active, working — running tools
-  executing: [" ◡⟳", " ◠⟳", " ◡⟳", " ◠⟳", " ◡⟳", " ≡⟳", " ◡⟳", " ◠⟳"],
-
-  // Smiling, pleased — good results
-  happy: [" ◠◠", " ◡◡", " ◠◠", " ◡◡", " ♥ ", " ◠◠", " ◡◡", " ♥ "],
-
-  // Patient, waiting dots — streaming response
-  waiting: [" ◡.", " ◡..", " ◡...", " ◠...", " ◠..", " ◠.", " ◡.", " ◡.."],
-
-  // Dozing off — idle for a while
-  sleeping: [" ◡z", " ◡Z", " ◡zZ", " ≡z", " ◡Z", " ◡z", " ≡Z", " ◡zZ"],
-
-  // Sparkly eyes — something cool happened
-  excited: [" ★★", " ✧✧", " ★★", " ✦✦", " ★★", " ✧✧", " ★★", " ✦✦"],
-
-  // Tilting head, unsure — doesn't understand
-  confused: [" ◡/", " ◠/", " ◡\\", " ◠\\", " ◡?", " ◠?", " ◡/", " ◠/"],
-
-  // X eyes — something broke
-  error: [" ✕✕", " ××", " ✕✕", " ××", " ✕✕", " ××", " ✕✕", " ××"],
-
-  // Check marks — task completed
-  success: [" ✓✓", " ✔✔", " ✓✓", " ✔✔", " ♥ ", " ✓✓", " ✔✔", " ♥ "],
-
-  // Spinning — loading state
-  loading: [" ◡|", " ◡/", " ◡-", " ◡\\", " ◠|", " ◠/", " ◠-", " ◠\\"],
+const FACES: Record<NullMood, MoodConfig> = {
+  idle: {
+    eyes: ["◠◠", "◡◡", "◠◠", "◡◡", "◠◠", "◡◡", "◠◠", "◡◡"],
+    mouth: ["◡", "◠", "◡", "◠", "◡", "◠", "◡", "◠"],
+    body: ["  ╷ ", "  ╷ ", "  ╷ ", "  ╷ ", "  ╷ ", "  ╷ ", "  ╷ ", "  ╷ "],
+    color: "blue",
+  },
+  thinking: {
+    eyes: ["◠?", "◠?", "◡?", "◡?", "◠?", "◠?", "◡?", "◡?"],
+    mouth: ["~", "~", "◡", "◡", "~", "~", "◡", "◡"],
+    body: ["  ╯ ", "  ╯ ", "  ─ ", "  ─ ", "  ╮ ", "  ╮ ", "  ─ ", "  ─ "],
+    color: "yellow",
+  },
+  executing: {
+    eyes: ["◠◠", "◠◠", "◡◡", "◡◡", "◠◠", "◠◠", "◡◡", "◡◡"],
+    mouth: ["⟳", "⟳", "⟳", "⟳", "⟳", "⟳", "⟳", "⟳"],
+    body: ["  │ ", "  ╎ ", "  │ ", "  ╎ ", "  │ ", "  ╎ ", "  │ ", "  ╎ "],
+    color: "magenta",
+  },
+  happy: {
+    eyes: ["◡◡", "◡◡", "◠◠", "◠◠", "◡◡", "◡◡", "◠◠", "◠◠"],
+    mouth: ["♥", "♥", "◡", "◡", "♥", "♥", "◡", "◡"],
+    body: ["  ╹ ", "  ╹ ", "  ╹ ", "  ╹ ", "  ╹ ", "  ╹ ", "  ╹ ", "  ╹ "],
+    color: "green",
+  },
+  waiting: {
+    eyes: ["◠◠", "◠◠", "◠◠", "◠◠", "◡◡", "◡◡", "◡◡", "◡◡"],
+    mouth: [". ", "..", "...", "...", "..", ". ", "..", "..."],
+    body: ["  ╷ ", "  ╷ ", "  ╷ ", "  ╷ ", "  ╷ ", "  ╷ ", "  ╷ ", "  ╷ "],
+    color: "gray",
+  },
+  sleeping: {
+    eyes: ["-.-", "-.-", "-.-", "-.-", "-.-", "-.-", "-.-", "-.-"],
+    mouth: ["z", "Z", "zz", "zz", "Z", "z", "zz", "zz"],
+    body: ["  ∪ ", "  ∪ ", "  ∪ ", "  ∪ ", "  ∪ ", "  ∪ ", "  ∪ ", "  ∪ "],
+    color: "gray",
+  },
+  excited: {
+    eyes: ["★★", "★★", "✧✧", "✧✧", "★★", "★★", "✦✦", "✦✦"],
+    mouth: ["✧", "✧", "◡", "◡", "✧", "✧", "◡", "◡"],
+    body: ["  ╱ ", "  ╱ ", "  ╱ ", "  ╱ ", "  ╲ ", "  ╲ ", "  ╲ ", "  ╲ "],
+    color: "cyan",
+  },
+  confused: {
+    eyes: ["◠?", "◠?", "◡?", "◡?", "◠?", "◠?", "◡?", "◡?"],
+    mouth: ["/", "\\", "/", "\\", "/", "\\", "/", "\\"],
+    body: ["  ╮ ", "  ╭ ", "  ╮ ", "  ╭ ", "  ╮ ", "  ╭ ", "  ╮ ", "  ╭ "],
+    color: "yellow",
+  },
+  error: {
+    eyes: ["✕✕", "✕✕", "××", "××", "✕✕", "✕✕", "××", "××"],
+    mouth: ["×", "×", "×", "×", "×", "×", "×", "×"],
+    body: ["  ╎ ", "  ╎ ", "  ╎ ", "  ╎ ", "  ╎ ", "  ╎ ", "  ╎ ", "  ╎ "],
+    color: "red",
+  },
+  success: {
+    eyes: ["◡◡", "◡◡", "◠◠", "◠◠", "◡◡", "◡◡", "◠◠", "◠◠"],
+    mouth: ["✓", "✓", "◡", "◡", "✓", "✓", "◡", "◡"],
+    body: ["  ╹ ", "  ╹ ", "  ╹ ", "  ╹ ", "  ╹ ", "  ╹ ", "  ╹ ", "  ╹ "],
+    color: "green",
+  },
+  loading: {
+    eyes: ["◠◠", "◠◠", "◠◠", "◠◠", "◡◡", "◡◡", "◡◡", "◡◡"],
+    mouth: ["|", "/", "-", "\\", "|", "/", "-", "\\"],
+    body: ["  │ ", "  ╎ ", "  ─ ", "  ╎ ", "  │ ", "  ╎ ", "  ─ ", "  ╎ "],
+    color: "blue",
+  },
 };
 
-const MOOD_COLORS: Record<NullMood, string> = {
-  idle: "blue",
-  thinking: "yellow",
-  executing: "magenta",
-  happy: "green",
-  waiting: "gray",
-  sleeping: "gray",
-  excited: "cyan",
-  confused: "yellow",
-  error: "red",
-  success: "green",
-  loading: "blue",
+const BLINK_EYES = {
+  idle: "-.-",
+  thinking: "-.-",
+  executing: "-.-",
+  happy: "-.-",
+  waiting: "-.-",
+  sleeping: "-.-",
+  excited: "-.-",
+  confused: "-.-",
+  error: "-.-",
+  success: "-.-",
+  loading: "-.-",
 };
 
-export function NullFace({ mood, frame }: NullFaceProps) {
-  const faces = FACES[mood];
-  const face = faces[frame % faces.length]!;
-  const color = MOOD_COLORS[mood];
+export function NullFace({ mood, frame, isBlinking = false }: NullFaceProps) {
+  const config = FACES[mood];
+  const frameIndex = frame % config.eyes.length;
+  const eyes = isBlinking ? BLINK_EYES[mood] : config.eyes[frameIndex];
+  const mouth = config.mouth[frameIndex];
+  const body = config.body[frameIndex];
 
-  return h(Text, { color, bold: true }, `◉${face}`);
+  return h(
+    Box,
+    { flexDirection: "column" },
+    h(Text, { color: config.color, bold: true }, "  ╭───╮"),
+    h(
+      Box,
+      { flexDirection: "row" },
+      h(Text, { color: config.color, bold: true }, "  │"),
+      h(Text, { color: config.color, bold: true }, eyes),
+      h(Text, { color: config.color, bold: true }, "│"),
+    ),
+    h(
+      Box,
+      { flexDirection: "row" },
+      h(Text, { color: config.color, bold: true }, "╰─┬─╯"),
+      h(Text, { color: config.color, bold: true }, mouth),
+      h(Text, { color: config.color }, "  "),
+      h(Text, { color: config.color, dimColor: true }, body),
+    ),
+  );
 }
 
 export function getMoodForStatus(

@@ -167,11 +167,11 @@ null-agent ships with 49 built-in tools organized into three capability areas: M
 
 Foundational tools for reading, writing, and shell execution.
 
-| Tool            | Name         | Description                                |
-| --------------- | ------------ | ------------------------------------------ |
-| `fileReadTool`  | `file_read`  | Read file contents                         |
-| `fileWriteTool` | `file_write` | Write file contents (creates parent dirs)  |
-| `shellTool`     | `shell`      | Run shell commands (30s timeout, 1MB buf)  |
+| Tool            | Name         | Description                               |
+| --------------- | ------------ | ----------------------------------------- |
+| `fileReadTool`  | `file_read`  | Read file contents                        |
+| `fileWriteTool` | `file_write` | Write file contents (creates parent dirs) |
+| `shellTool`     | `shell`      | Run shell commands (30s timeout, 1MB buf) |
 
 ### Hand (File Manipulation)
 
@@ -179,12 +179,12 @@ Advanced file operations with safety features and undo support.
 
 | Tool              | Name           | Description                                     |
 | ----------------- | -------------- | ----------------------------------------------- |
-| `fileMoveTool`    | `file_move`    | Move files with undo support                   |
-| `fileCopyTool`    | `file_copy`    | Copy files                                     |
-| `fileDeleteTool`  | `file_delete`  | Delete files (moves to trash, supports restore)|
+| `fileMoveTool`    | `file_move`    | Move files with undo support                    |
+| `fileCopyTool`    | `file_copy`    | Copy files                                      |
+| `fileDeleteTool`  | `file_delete`  | Delete files (moves to trash, supports restore) |
 | `fileGlobTool`    | `file_glob`    | Find files matching glob patterns               |
-| `fileRestoreTool` | `file_restore` | List/restore files from trash                  |
-| `fileBulkTool`    | `file_bulk`    | Execute batch file operations                  |
+| `fileRestoreTool` | `file_restore` | List/restore files from trash                   |
+| `fileBulkTool`    | `file_bulk`    | Execute batch file operations                   |
 
 **Safety Features:**
 
@@ -197,16 +197,16 @@ Advanced file operations with safety features and undo support.
 
 Script execution, process management, and terminal sessions.
 
-| Tool                 | Name             | Description                              |
-| -------------------- | ---------------- | ---------------------------------------- |
-| `scriptDetectTool`   | `script_detect`  | Auto-detect scripts from package.json/Makefile |
-| `scriptRunTool`      | `script_run`     | Run detected or custom scripts            |
-| `processStartTool`  | `process_start` | Start background processes              |
-| `processStopTool`   | `process_stop`  | Stop background processes                |
-| `processListTool`   | `process_list`  | List running processes                  |
-| `sessionCreateTool` | `session_create`| Create persistent terminal sessions     |
-| `sessionAttachTool` | `session_attach`| Attach to existing sessions             |
-| `taskSprintTool`    | `task_sprint`   | Run concurrent tasks with progress       |
+| Tool                | Name             | Description                                    |
+| ------------------- | ---------------- | ---------------------------------------------- |
+| `scriptDetectTool`  | `script_detect`  | Auto-detect scripts from package.json/Makefile |
+| `scriptRunTool`     | `script_run`     | Run detected or custom scripts                 |
+| `processStartTool`  | `process_start`  | Start background processes                     |
+| `processStopTool`   | `process_stop`   | Stop background processes                      |
+| `processListTool`   | `process_list`   | List running processes                         |
+| `sessionCreateTool` | `session_create` | Create persistent terminal sessions            |
+| `sessionAttachTool` | `session_attach` | Attach to existing sessions                    |
+| `taskSprintTool`    | `task_sprint`    | Run concurrent tasks with progress             |
 
 **Process Features:**
 
