@@ -5,8 +5,8 @@
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License" />
   <img src="https://img.shields.io/badge/node-%3E%3D20.19-brightgreen?style=for-the-badge&logo=node.js" alt="Node" />
   <img src="https://img.shields.io/badge/typescript-6.0-blue?style=for-the-badge&logo=typescript" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/tests-144%2F144%20passing-brightgreen?style=for-the-badge" alt="Tests" />
-  <img src="https://img.shields.io/badge/tools-41%20built--in-orange?style=for-the-badge" alt="Tools" />
+  <img src="https://img.shields.io/badge/tests-182%2F182%20passing-brightgreen?style=for-the-badge" alt="Tests" />
+  <img src="https://img.shields.io/badge/tools-49%20built--in-orange?style=for-the-badge" alt="Tools" />
   <img src="https://img.shields.io/badge/providers-5%20LLMs-purple?style=for-the-badge" alt="Providers" />
   <img src="https://img.shields.io/badge/build-passing-success?style=for-the-badge&logo=vite" alt="Build" />
 </p>
@@ -161,31 +161,59 @@ null-agent auth openai
 
 ## Tools
 
-null-agent ships with 41 built-in tools covering file operations, shell execution, git workflows, dev workflows, code review, testing, and web search.
+null-agent ships with 49 built-in tools organized into three capability areas: Mind (reasoning), Hand (file manipulation), and Feet (task orchestration).
 
-### Core Tools
+### Mind (Core)
+
+Foundational tools for reading, writing, and shell execution.
+
+| Tool            | Name         | Description                                |
+| --------------- | ------------ | ------------------------------------------ |
+| `fileReadTool`  | `file_read`  | Read file contents                         |
+| `fileWriteTool` | `file_write` | Write file contents (creates parent dirs)  |
+| `shellTool`     | `shell`      | Run shell commands (30s timeout, 1MB buf)  |
+
+### Hand (File Manipulation)
+
+Advanced file operations with safety features and undo support.
 
 | Tool              | Name           | Description                                     |
 | ----------------- | -------------- | ----------------------------------------------- |
-| `fileReadTool`    | `file_read`    | Read file contents                              |
-| `fileWriteTool`   | `file_write`   | Write file contents (creates parent dirs)       |
-| `fileMoveTool`    | `file_move`    | Move files with undo support                    |
-| `fileCopyTool`    | `file_copy`    | Copy files                                      |
-| `fileDeleteTool`  | `file_delete`  | Delete files (moves to trash, supports restore) |
+| `fileMoveTool`    | `file_move`    | Move files with undo support                   |
+| `fileCopyTool`    | `file_copy`    | Copy files                                     |
+| `fileDeleteTool`  | `file_delete`  | Delete files (moves to trash, supports restore)|
 | `fileGlobTool`    | `file_glob`    | Find files matching glob patterns               |
-| `fileRestoreTool` | `file_restore` | List/restore files from trash                   |
-| `fileBulkTool`    | `file_bulk`    | Execute batch file operations                   |
-| `shellTool`       | `shell`        | Run shell commands (30s timeout, 1MB buffer)    |
+| `fileRestoreTool` | `file_restore` | List/restore files from trash                  |
+| `fileBulkTool`    | `file_bulk`    | Execute batch file operations                  |
 
-### File Manipulation Features
+**Safety Features:**
 
-**Root Boundary Security:** All file operations validate paths against a configurable root boundary (default: project root) to prevent path traversal attacks.
+- **Root Boundary:** All operations validate paths against a configurable root (default: project root) to prevent traversal attacks
+- **Trash-Based Delete:** Deleted files move to `~/.null-agent/trash/` instead of permanent deletion
+- **Glob Patterns:** `file_glob` supports `**/*.ts`, `src/**/*.js`, etc. with automatic `node_modules/`/`.git/` exclusion
+- **Bulk Operations:** `file_bulk` executes batch move/copy/delete with partial failure handling
 
-**Trash-Based Deletion:** Files deleted via `file_delete` are moved to `~/.null-agent/trash/` instead of permanent deletion. Use `file_restore` to recover files.
+### Feet (Task Orchestration)
 
-**Glob Patterns:** `file_glob` supports patterns like `**/*.ts`, `src/**/*.js`, with automatic exclusion of `node_modules/` and `.git/`.
+Script execution, process management, and terminal sessions.
 
-**Bulk Operations:** `file_bulk` executes multiple move/copy/delete operations in batch with partial failure handling.
+| Tool                 | Name             | Description                              |
+| -------------------- | ---------------- | ---------------------------------------- |
+| `scriptDetectTool`   | `script_detect`  | Auto-detect scripts from package.json/Makefile |
+| `scriptRunTool`      | `script_run`     | Run detected or custom scripts            |
+| `processStartTool`  | `process_start` | Start background processes              |
+| `processStopTool`   | `process_stop`  | Stop background processes                |
+| `processListTool`   | `process_list`  | List running processes                  |
+| `sessionCreateTool` | `session_create`| Create persistent terminal sessions     |
+| `sessionAttachTool` | `session_attach`| Attach to existing sessions             |
+| `taskSprintTool`    | `task_sprint`   | Run concurrent tasks with progress       |
+
+**Process Features:**
+
+- **Auto-Detection:** Automatically finds scripts from `package.json`, `Makefile`, and project conventions
+- **Ephemeral Processes:** Background processes die when the agent stops
+- **Streaming Modes:** Configure output as streamed, summarized, or both
+- **Singleton Managers:** Shared ProcessManager/SessionManager across all tool instances
 
 ### Git Tools
 
