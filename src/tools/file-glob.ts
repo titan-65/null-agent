@@ -36,13 +36,10 @@ export const fileGlobTool: ToolDefinition = {
       pattern: String({ description: "Glob pattern (e.g., **/*.ts)" }),
       rootBoundary: Optional(String({ description: "Root boundary for path validation" })),
       options: Optional(
-        Object(
-          {
-            ignore: Array(String()),
-            limit: Number(),
-          },
-          ["ignore", "limit"],
-        ),
+        Object({
+          ignore: Array(String()),
+          limit: Number(),
+        }),
       ),
     },
     ["pattern"],
