@@ -20,7 +20,7 @@ const DEFAULT_CONFIG: ContextConfig = {
   maxTokens: 128_000, // Conservative default
   reserveForResponse: 8_000,
   reserveForSystem: 4_000,
-  toolResultMaxChars: 5_000,
+  toolResultMaxChars: 15_000,
   messageMaxChars: 50_000,
 };
 
@@ -151,7 +151,7 @@ export class ContextManager {
 export function truncateToolResult(
   toolName: string,
   content: string,
-  maxChars: number = 5000,
+  maxChars: number = 15_000,
 ): string {
   if (content.length <= maxChars) return content;
 
