@@ -1,7 +1,28 @@
 {
-  "name": "test-project",
-  "scripts": {
-    "test": "vitest"
+  "name": "null-agent",
+  "version": "0.3.0",
+  "description": "Interactive coding assistant library",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./testing": {
+      "import": "./dist/testing/index.js"
+    }
   },
-  "version": "0.1.0"
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "vp pack",
+    "test": "vp test",
+    "check": "vp check"
+  },
+  "license": "MIT"
 }
