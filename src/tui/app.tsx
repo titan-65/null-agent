@@ -71,7 +71,6 @@ export function App({
   const [notification, setNotification] = useState<ActiveNotification | null>(null);
   const [notificationAge, setNotificationAge] = useState(0);
   const [faceFrame, setFaceFrame] = useState(0);
-  const [isBlinking, setIsBlinking] = useState(false);
   const [lastActivityTime, setLastActivityTime] = useState(Date.now());
 
   const streamBuffer = useRef("");
@@ -141,18 +140,8 @@ export function App({
       setFaceFrame((f) => f + 1);
     }, 500);
 
-    // Random blinking every 3-5 seconds
-    const blinkTimer = setInterval(
-      () => {
-        setIsBlinking(true);
-        setTimeout(() => setIsBlinking(false), 150);
-      },
-      3000 + Math.random() * 2000,
-    );
-
     return () => {
       if (faceTimer.current) clearInterval(faceTimer.current);
-      clearInterval(blinkTimer);
     };
   }, []);
 
@@ -690,7 +679,6 @@ export function App({
       frame: faceFrame,
       status: getAgentStatusText(status),
       openTaskCount: agent.getOpenTasks().length,
-      isBlinking,
     }),
     h(InputBar, {
       onSubmit: handleSend,
