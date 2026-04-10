@@ -195,6 +195,8 @@ async function executeToolCalls(
     }
   }
 
+  const results: Array<{ name: string; result: { content: string; isError?: boolean } }> = [];
+
   for (const { name, args } of parsed) {
     const toolCallId = `tool_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     callbacks?.onToolCall?.(name, args);
@@ -233,7 +235,8 @@ async function executeToolCalls(
         arguments: args,
         result: blockedResult,
       });
-      return [{ name, result: blockedResult }];
+      results.push({ name, result: blockedResult });
+      continue;
     }
 
     const result = await config.tools.execute(name, args);
@@ -262,12 +265,11 @@ async function executeToolCalls(
       arguments: args,
       result,
     });
+
+    results.push({ name, result: { content: result.content, isError: result.isError } });
   }
 
-  return parsed.map(({ name, args }) => ({
-    name,
-    result: { content: "", isError: false },
-  }));
+  return results;
 }
 
 function formatArgsForHistory(args: string): string {
