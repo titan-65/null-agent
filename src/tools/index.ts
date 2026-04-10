@@ -41,6 +41,13 @@ export { fileGlobTool } from "./file-glob.ts";
 export { fileRestoreTool } from "./file-restore.ts";
 export { fileBulkTool } from "./file-bulk.ts";
 export { taskSprintTool } from "./task-sprint.ts";
+export { scriptDetectTool } from "./script-detect.ts";
+export { scriptRunTool } from "./script-run.ts";
+export { processStartTool } from "./process-start.ts";
+export { processStopTool } from "./process-stop.ts";
+export { processListTool } from "./process-list.ts";
+export { sessionCreateTool } from "./session-create.ts";
+export { sessionAttachTool } from "./session-attach.ts";
 export type { TrashEntry } from "./trash.ts";
 
 import { fileReadTool } from "./file-read.ts";
@@ -57,6 +64,14 @@ import { fileDeleteTool } from "./file-delete.ts";
 import { fileGlobTool } from "./file-glob.ts";
 import { fileRestoreTool } from "./file-restore.ts";
 import { fileBulkTool } from "./file-bulk.ts";
+import { taskSprintTool } from "./task-sprint.ts";
+import { scriptDetectTool } from "./script-detect.ts";
+import { scriptRunTool } from "./script-run.ts";
+import { processStartTool } from "./process-start.ts";
+import { processStopTool } from "./process-stop.ts";
+import { processListTool } from "./process-list.ts";
+import { sessionCreateTool } from "./session-create.ts";
+import { sessionAttachTool } from "./session-attach.ts";
 import { ToolRegistry } from "./registry.ts";
 import type { ToolDefinition } from "./types.ts";
 
@@ -79,6 +94,14 @@ export const builtinTools: ToolDefinition[] = [
   fileGlobTool,
   fileRestoreTool,
   fileBulkTool,
+  taskSprintTool,
+  scriptDetectTool,
+  scriptRunTool,
+  processStartTool,
+  processStopTool,
+  processListTool,
+  sessionCreateTool,
+  sessionAttachTool,
 ];
 
 export function createDefaultRegistry(): ToolRegistry {
