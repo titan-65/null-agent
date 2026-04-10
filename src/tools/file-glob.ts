@@ -15,9 +15,17 @@ export const fileGlobTool: ToolDefinition = {
       rootBoundary: { type: "string", description: "Root boundary for path validation" },
       options: {
         type: "object",
+        description: "Optional settings",
         properties: {
-          ignore: { type: "array", items: { type: "string" } },
-          limit: { type: "number" },
+          ignore: {
+            type: "array",
+            items: { type: "string" },
+            description: "Patterns to ignore",
+          },
+          limit: {
+            type: "number",
+            description: "Maximum number of results to return",
+          },
         },
       },
     },
