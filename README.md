@@ -165,17 +165,17 @@ null-agent ships with 41 built-in tools covering file operations, shell executio
 
 ### Core Tools
 
-| Tool              | Name           | Description                                      |
-| ----------------- | -------------- | ------------------------------------------------ |
-| `fileReadTool`    | `file_read`    | Read file contents                               |
-| `fileWriteTool`   | `file_write`   | Write file contents (creates parent dirs)        |
-| `fileMoveTool`    | `file_move`    | Move files with undo support                     |
+| Tool              | Name           | Description                                     |
+| ----------------- | -------------- | ----------------------------------------------- |
+| `fileReadTool`    | `file_read`    | Read file contents                              |
+| `fileWriteTool`   | `file_write`   | Write file contents (creates parent dirs)       |
+| `fileMoveTool`    | `file_move`    | Move files with undo support                    |
 | `fileCopyTool`    | `file_copy`    | Copy files                                      |
-| `fileDeleteTool`  | `file_delete`  | Delete files (moves to trash, supports restore)  |
+| `fileDeleteTool`  | `file_delete`  | Delete files (moves to trash, supports restore) |
 | `fileGlobTool`    | `file_glob`    | Find files matching glob patterns               |
 | `fileRestoreTool` | `file_restore` | List/restore files from trash                   |
-| `fileBulkTool`    | `file_bulk`    | Execute batch file operations                    |
-| `shellTool`       | `shell`        | Run shell commands (30s timeout, 1MB buffer)     |
+| `fileBulkTool`    | `file_bulk`    | Execute batch file operations                   |
+| `shellTool`       | `shell`        | Run shell commands (30s timeout, 1MB buffer)    |
 
 ### File Manipulation Features
 
