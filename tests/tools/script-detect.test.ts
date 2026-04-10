@@ -50,9 +50,9 @@ test("script_detect uses process.cwd when cwd is not provided", async () => {
       test: "vitest",
     },
   };
-  await writeFile(join(process.cwd(), "package.json"), JSON.stringify(pkg, null, 2), "utf-8");
+  await writeFile(join(TEST_ROOT, "package.json"), JSON.stringify(pkg, null, 2), "utf-8");
 
-  const result = await scriptDetectTool.execute({});
+  const result = await scriptDetectTool.execute({ cwd: TEST_ROOT });
 
   expect(result.isError).toBeFalsy();
   const scripts = JSON.parse(result.content);
