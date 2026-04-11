@@ -7,6 +7,7 @@ import { HelpOverlay } from "./components/HelpOverlay.tsx";
 import { Notification } from "./components/Notification.tsx";
 import { AgentBar } from "./components/AgentBar.tsx";
 import { getMoodForStatus } from "./components/NullFace.tsx";
+import { DailySummary } from "./components/DailySummary.tsx";
 import type { Agent } from "../agent/index.ts";
 import { formatTaskList } from "../agent/tasks.ts";
 import { generateSuggestions, getHighestPrioritySuggestion } from "../agent/suggestions.ts";
@@ -19,6 +20,8 @@ import type { AwarenessManager } from "../awareness/manager.ts";
 import type { AwarenessEvent } from "../awareness/types.ts";
 import { PROVIDERS } from "../providers/index.ts";
 import { detectProjectContext, type ProjectContext } from "./context.ts";
+import { ActivityTracker } from "../accountability/tracker.ts";
+import type { ActivityType, SessionStats } from "../accountability/types.ts";
 
 export interface TuiMessage {
   role: "user" | "assistant" | "system";
@@ -72,12 +75,15 @@ export function App({
   const [notificationAge, setNotificationAge] = useState(0);
   const [faceFrame, setFaceFrame] = useState(0);
   const [lastActivityTime, setLastActivityTime] = useState(Date.now());
+  const [sessionStats, setSessionStats] = useState<SessionStats | null>(null);
+  const [showDailySummary, setShowDailySummary] = useState(true);
 
   const streamBuffer = useRef("");
   const flushTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const notificationTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const faceTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activityTracker = useRef<ActivityTracker>(new ActivityTracker());
 
   const mood = getMoodForStatus(status, Date.now() - lastActivityTime < 30_000);
 
@@ -142,6 +148,21 @@ export function App({
 
     return () => {
       if (faceTimer.current) clearInterval(faceTimer.current);
+    };
+  }, []);
+
+  // Initialize activity tracker
+  useEffect(() => {
+    activityTracker.current.init().then(() => {
+      setSessionStats(activityTracker.current.getSessionStats());
+    });
+
+    const statsInterval = setInterval(() => {
+      setSessionStats(activityTracker.current.getSessionStats());
+    }, 60000);
+
+    return () => {
+      clearInterval(statsInterval);
     };
   }, []);
 
@@ -583,6 +604,7 @@ export function App({
           },
           onToolResult: (name, result, isError) => {
             setStatus("thinking");
+            activityTracker.current.recordToolCall(name, {}, result);
             setMessages((prev) => {
               const updated = [...prev];
               const last = updated[updated.length - 1];
@@ -596,6 +618,7 @@ export function App({
               }
               return updated;
             });
+            setSessionStats(activityTracker.current.getSessionStats());
           },
         });
 
@@ -655,6 +678,9 @@ export function App({
     if (key.ctrl && input === "h") {
       setShowHelp((prev) => !prev);
     }
+    if (key.ctrl && input === "s") {
+      setShowDailySummary((prev) => !prev);
+    }
   });
 
   return h(
@@ -666,7 +692,14 @@ export function App({
       toolCount,
       project,
       status,
+      currentActivity: activityTracker.current.getCurrentActivity(),
     }),
+    showDailySummary && sessionStats
+      ? h(DailySummary, {
+          stats: sessionStats,
+          onClose: () => setShowDailySummary(false),
+        })
+      : null,
     showHelp ? h(HelpOverlay) : h(ChatPanel, { messages }),
     notification
       ? h(Notification, {

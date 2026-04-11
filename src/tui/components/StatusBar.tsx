@@ -2,6 +2,7 @@ import { createElement as h, memo } from "react";
 import { Box, Text } from "ink";
 import type { ProjectContext } from "../context.ts";
 import { VERSION } from "../../version.ts";
+import type { Activity } from "../../accountability/types.ts";
 
 interface StatusBarProps {
   provider: string;
@@ -9,6 +10,7 @@ interface StatusBarProps {
   toolCount: number;
   project?: ProjectContext;
   status: "idle" | "thinking" | "executing" | "waiting";
+  currentActivity?: Activity | null;
 }
 
 const MAX_PROJECT_NAME = 20;
@@ -19,12 +21,45 @@ function truncate(str: string, maxLen: number): string {
   return str.slice(0, maxLen - 1) + "…";
 }
 
+function formatActivityDuration(activity: Activity | null): string {
+  if (!activity) return "";
+  const seconds = Math.floor((Date.now() - activity.startTime.getTime()) / 1000);
+  const minutes = Math.floor(seconds / 60);
+  if (minutes > 60) {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h ${mins}m`;
+  }
+  if (minutes > 0) return `${minutes}m`;
+  return `${seconds}s`;
+}
+
+function getActivityIcon(type: string): string {
+  switch (type) {
+    case "coding":
+      return "⌨";
+    case "review":
+      return "👁";
+    case "debugging":
+      return "🔍";
+    case "testing":
+      return "✓";
+    case "meeting":
+      return "📅";
+    case "docs":
+      return "📝";
+    default:
+      return "•";
+  }
+}
+
 export const StatusBar = memo(function StatusBar({
   provider,
   model,
   toolCount,
   project,
   status,
+  currentActivity,
 }: StatusBarProps) {
   const statusInfo = getStatusInfo(status);
 
@@ -57,6 +92,15 @@ export const StatusBar = memo(function StatusBar({
     h(
       Box,
       { gap: 2 },
+      currentActivity
+        ? h(
+            Box,
+            { gap: 1 },
+            h(Text, { color: "magenta" }, getActivityIcon(currentActivity.type)),
+            h(Text, { color: "gray" }, truncate(currentActivity.type, 10)),
+            h(Text, { color: "gray" }, formatActivityDuration(currentActivity)),
+          )
+        : null,
       h(Text, { color: "gray" }, truncate(provider, 10)),
       h(Text, { color: "gray" }, truncate(model, MAX_MODEL_NAME)),
       h(Text, { color: "gray" }, `${toolCount} tools`),
