@@ -6,7 +6,7 @@ import { InputBar } from "./components/InputBar.tsx";
 import { HelpOverlay } from "./components/HelpOverlay.tsx";
 import { Notification } from "./components/Notification.tsx";
 import { AgentBar } from "./components/AgentBar.tsx";
-import { getMoodForStatus } from "./components/NullFace.tsx";
+import { getMoodForStatus, getMoodForActivity } from "./components/NullFace.tsx";
 import { DailySummary } from "./components/DailySummary.tsx";
 import type { Agent } from "../agent/index.ts";
 import { formatTaskList } from "../agent/tasks.ts";
@@ -21,7 +21,17 @@ import type { AwarenessEvent } from "../awareness/types.ts";
 import { PROVIDERS } from "../providers/index.ts";
 import { detectProjectContext, type ProjectContext } from "./context.ts";
 import { ActivityTracker } from "../accountability/tracker.ts";
-import type { ActivityType, SessionStats } from "../accountability/types.ts";
+import { Accountant } from "../accountability/accountant.ts";
+import { Reporter } from "../accountability/reporter.ts";
+import { GoalTracker } from "../accountability/goals.ts";
+import { AccountabilityStore } from "../accountability/storage.ts";
+import type {
+  ActivityType,
+  SessionStats,
+  Goal,
+  CalendarEvent,
+  ActivitySummary,
+} from "../accountability/types.ts";
 
 export interface TuiMessage {
   role: "user" | "assistant" | "system";
@@ -77,15 +87,27 @@ export function App({
   const [lastActivityTime, setLastActivityTime] = useState(Date.now());
   const [sessionStats, setSessionStats] = useState<SessionStats | null>(null);
   const [showDailySummary, setShowDailySummary] = useState(true);
+  const [todaysGoals, setTodaysGoals] = useState<Goal[]>([]);
+  const [calendarEvents] = useState<CalendarEvent[]>([]);
+  const [yesterdaySummary, setYesterdaySummary] = useState<ActivitySummary | null>(null);
 
   const streamBuffer = useRef("");
   const flushTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const notificationTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const faceTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const accountabilityStore = useRef<AccountabilityStore>(new AccountabilityStore());
   const activityTracker = useRef<ActivityTracker>(new ActivityTracker());
+  const goalTracker = useRef<GoalTracker>(new GoalTracker(accountabilityStore.current));
+  const reporter = useRef<Reporter | null>(null);
+  const accountant = useRef<Accountant | null>(null);
+  const pendingToolArgs = useRef<Map<string, Record<string, unknown>>>(new Map());
 
-  const mood = getMoodForStatus(status, Date.now() - lastActivityTime < 30_000);
+  const currentActivityType = activityTracker.current.getCurrentActivity()?.type ?? null;
+  const mood =
+    status !== "idle"
+      ? getMoodForStatus(status, Date.now() - lastActivityTime < 30_000)
+      : getMoodForActivity(currentActivityType);
 
   const startFlushing = useCallback(() => {
     if (flushTimer.current) return;
@@ -151,18 +173,60 @@ export function App({
     };
   }, []);
 
-  // Initialize activity tracker
+  // Initialize activity tracker, reporter, accountant, and load startup data
   useEffect(() => {
-    activityTracker.current.init().then(() => {
-      setSessionStats(activityTracker.current.getSessionStats());
+    const tracker = activityTracker.current;
+    const store = accountabilityStore.current;
+
+    tracker.init().then(async () => {
+      setSessionStats(tracker.getSessionStats());
+
+      // Load today's goals for startup summary
+      const goals = await goalTracker.current.getTodaysGoals();
+      setTodaysGoals(goals);
+
+      // Load yesterday's summary
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const ySummary = await tracker.getActivitySummary(yesterday);
+      const hasYesterdayData =
+        ySummary.totalCoding > 0 || ySummary.totalMeetings > 0 || ySummary.totalDebugging > 0;
+      setYesterdaySummary(hasYesterdayData ? ySummary : null);
+
+      // Wire up reporter and accountant
+      reporter.current = new Reporter(store, tracker);
+      accountant.current = new Accountant(tracker);
     });
 
+    // Update stats every minute
     const statsInterval = setInterval(() => {
-      setSessionStats(activityTracker.current.getSessionStats());
-    }, 60000);
+      setSessionStats(tracker.getSessionStats());
+    }, 60_000);
+
+    // Accountant polling — check for notifications every minute
+    const accountantInterval = setInterval(async () => {
+      if (!accountant.current) return;
+      const notifications = [
+        ...(await accountant.current.checkGoalProgress()),
+        ...(await accountant.current.checkActivityPatterns()),
+        ...accountant.current.checkDailyRituals(),
+      ];
+      for (const notif of notifications) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "system" as const,
+            content: notif.message,
+            toolCalls: [],
+            isStreaming: false,
+          },
+        ]);
+      }
+    }, 60_000);
 
     return () => {
       clearInterval(statsInterval);
+      clearInterval(accountantInterval);
     };
   }, []);
 
@@ -559,6 +623,204 @@ export function App({
         return;
       }
 
+      // ── Accountability commands ───────────────────────────────────────
+
+      if (trimmed === "/report") {
+        if (reporter.current) {
+          const report = await reporter.current.generateDailyReport();
+          const text = reporter.current.formatDailyReport(report);
+          await reporter.current.saveReport(report);
+          setMessages((prev) => [
+            ...prev,
+            { role: "system", content: text, toolCalls: [], isStreaming: false },
+          ]);
+        }
+        return;
+      }
+
+      if (trimmed === "/report week") {
+        if (reporter.current) {
+          const monday = getMondayOfCurrentWeek();
+          const report = await reporter.current.generateWeeklyReport(monday);
+          const text = reporter.current.formatWeeklyReport(report);
+          await reporter.current.saveWeeklyReport(report);
+          setMessages((prev) => [
+            ...prev,
+            { role: "system", content: text, toolCalls: [], isStreaming: false },
+          ]);
+        }
+        return;
+      }
+
+      if (trimmed === "/goals") {
+        const goals = await goalTracker.current.getTodaysGoals();
+        const text =
+          goals.length > 0
+            ? `Today's goals:\n${goalTracker.current.formatGoalList(goals)}`
+            : "No goals for today. Add one with /goal add <text>";
+        setMessages((prev) => [
+          ...prev,
+          { role: "system", content: text, toolCalls: [], isStreaming: false },
+        ]);
+        return;
+      }
+
+      if (trimmed.startsWith("/goal add ")) {
+        const description = trimmed.slice(10).trim();
+        if (description) {
+          const goal = await goalTracker.current.createGoal(description, "daily");
+          const updatedGoals = await goalTracker.current.getTodaysGoals();
+          setTodaysGoals(updatedGoals);
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "system",
+              content: `✓ Goal added: "${goal.description}" [${goal.id.slice(0, 8)}]`,
+              toolCalls: [],
+              isStreaming: false,
+            },
+          ]);
+        } else {
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "system",
+              content: "Usage: /goal add <description>",
+              toolCalls: [],
+              isStreaming: false,
+            },
+          ]);
+        }
+        return;
+      }
+
+      if (trimmed.startsWith("/goal done ")) {
+        const id = trimmed.slice(11).trim();
+        const all = await goalTracker.current.getAllGoals();
+        const match = all.find((g) => g.id.startsWith(id));
+        if (match) {
+          await goalTracker.current.completeGoal(match.id);
+          const updatedGoals = await goalTracker.current.getTodaysGoals();
+          setTodaysGoals(updatedGoals);
+          if (accountant.current) {
+            setMessages((prev) => [
+              ...prev,
+              {
+                role: "system",
+                content: accountant.current!.celebrateWin({ ...match, status: "completed" }),
+                toolCalls: [],
+                isStreaming: false,
+              },
+            ]);
+          }
+        } else {
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "system",
+              content: `Goal "${id}" not found. Use /goals to list your goals.`,
+              toolCalls: [],
+              isStreaming: false,
+            },
+          ]);
+        }
+        return;
+      }
+
+      if (trimmed.startsWith("/goal rm ")) {
+        const id = trimmed.slice(9).trim();
+        const all = await goalTracker.current.getAllGoals();
+        const match = all.find((g) => g.id.startsWith(id));
+        if (match) {
+          await goalTracker.current.deleteGoal(match.id);
+          const updatedGoals = await goalTracker.current.getTodaysGoals();
+          setTodaysGoals(updatedGoals);
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "system",
+              content: `Goal removed: "${match.description}"`,
+              toolCalls: [],
+              isStreaming: false,
+            },
+          ]);
+        } else {
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "system",
+              content: `Goal "${id}" not found.`,
+              toolCalls: [],
+              isStreaming: false,
+            },
+          ]);
+        }
+        return;
+      }
+
+      if (trimmed.startsWith("/track ")) {
+        const arg = trimmed.slice(7).trim();
+        if (arg === "stop") {
+          const current = activityTracker.current.getCurrentActivity();
+          if (current) {
+            await activityTracker.current.endActivity(current.id);
+            setMessages((prev) => [
+              ...prev,
+              {
+                role: "system",
+                content: `Stopped tracking: ${current.description}`,
+                toolCalls: [],
+                isStreaming: false,
+              },
+            ]);
+          } else {
+            setMessages((prev) => [
+              ...prev,
+              { role: "system", content: "No active tracking.", toolCalls: [], isStreaming: false },
+            ]);
+          }
+        } else {
+          const validTypes: ActivityType[] = [
+            "coding",
+            "review",
+            "debugging",
+            "testing",
+            "docs",
+            "meeting",
+            "planning",
+            "standup",
+            "break",
+            "other",
+          ];
+          const type = arg as ActivityType;
+          if (validTypes.includes(type)) {
+            await activityTracker.current.startActivity(type);
+            setMessages((prev) => [
+              ...prev,
+              {
+                role: "system",
+                content: `Now tracking: ${type}`,
+                toolCalls: [],
+                isStreaming: false,
+              },
+            ]);
+          } else {
+            setMessages((prev) => [
+              ...prev,
+              {
+                role: "system",
+                content: `Unknown activity type: "${arg}"\nValid types: ${validTypes.join(", ")}`,
+                toolCalls: [],
+                isStreaming: false,
+              },
+            ]);
+          }
+        }
+        return;
+      }
+
+      // ────────────────────────────────────────────────────────────────────
+
       setShowHelp(false);
       setLastActivityTime(Date.now());
 
@@ -590,6 +852,7 @@ export function App({
           onToolCall: (name, args) => {
             stopFlushing();
             setStatus("executing");
+            pendingToolArgs.current.set(name, args);
             setMessages((prev) => {
               const updated = [...prev];
               const last = updated[updated.length - 1];
@@ -604,7 +867,9 @@ export function App({
           },
           onToolResult: (name, result, isError) => {
             setStatus("thinking");
-            activityTracker.current.recordToolCall(name, {}, result);
+            const args = pendingToolArgs.current.get(name) ?? {};
+            pendingToolArgs.current.delete(name);
+            activityTracker.current.recordToolCall(name, args, result);
             setMessages((prev) => {
               const updated = [...prev];
               const last = updated[updated.length - 1];
@@ -694,9 +959,12 @@ export function App({
       status,
       currentActivity: activityTracker.current.getCurrentActivity(),
     }),
-    showDailySummary && sessionStats
+    showDailySummary
       ? h(DailySummary, {
           stats: sessionStats,
+          goals: todaysGoals,
+          calendarEvents,
+          yesterdaySummary,
           onClose: () => setShowDailySummary(false),
         })
       : null,
@@ -810,4 +1078,14 @@ function getAgentStatusText(status: AgentStatus): string {
     default:
       return "ready";
   }
+}
+
+function getMondayOfCurrentWeek(): Date {
+  const now = new Date();
+  const day = now.getDay(); // 0 = Sunday
+  const diff = day === 0 ? -6 : 1 - day;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() + diff);
+  monday.setHours(0, 0, 0, 0);
+  return monday;
 }

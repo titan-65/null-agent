@@ -70,3 +70,30 @@ export function getMoodForStatus(
       return hasRecentActivity ? "happy" : "idle";
   }
 }
+
+/**
+ * Returns a face mood based on the current tracked activity type.
+ * Used when the agent is idle (not actively processing a request).
+ */
+export function getMoodForActivity(activityType: string | null | undefined): NullMood {
+  switch (activityType) {
+    case "coding":
+      return "executing";
+    case "review":
+      return "thinking";
+    case "debugging":
+      return "confused";
+    case "testing":
+      return "loading";
+    case "meeting":
+    case "standup":
+      return "waiting";
+    case "docs":
+    case "planning":
+      return "thinking";
+    case "break":
+      return "sleeping";
+    default:
+      return "idle";
+  }
+}

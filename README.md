@@ -1,17 +1,17 @@
 # null-agent
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.3.0-blue?style=for-the-badge" alt="Version" />
+  <img src="https://img.shields.io/badge/version-0.5.0-blue?style=for-the-badge" alt="Version" />
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License" />
   <img src="https://img.shields.io/badge/node-%3E%3D20.19-brightgreen?style=for-the-badge&logo=node.js" alt="Node" />
   <img src="https://img.shields.io/badge/typescript-6.0-blue?style=for-the-badge&logo=typescript" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/tests-182%2F182%20passing-brightgreen?style=for-the-badge" alt="Tests" />
+  <img src="https://img.shields.io/badge/tests-255%2F255%20passing-brightgreen?style=for-the-badge" alt="Tests" />
   <img src="https://img.shields.io/badge/tools-49%20built--in-orange?style=for-the-badge" alt="Tools" />
   <img src="https://img.shields.io/badge/providers-5%20LLMs-purple?style=for-the-badge" alt="Providers" />
   <img src="https://img.shields.io/badge/build-passing-success?style=for-the-badge&logo=vite" alt="Build" />
 </p>
 
-Interactive coding assistant library with multi-provider LLM support, a rich terminal UI, tool system, conversation memory, project awareness, and multi-agent orchestration.
+Interactive coding assistant library with multi-provider LLM support, a rich terminal UI, tool system, conversation memory, project awareness, multi-agent orchestration, and a built-in **developer day tracker** that keeps you accountable.
 
 Use it as a **library** to build AI-powered developer tools, or run it directly as a **CLI** with four different interfaces.
 
@@ -127,7 +127,7 @@ export OPENROUTER_API_KEY='...'
 null-agent --provider openrouter
 ```
 
-Get a free Gemini key: https://aistudio.google.com/apikey
+Get a free Gemini key: https://aistudio.google.com/apikey  
 Get a free OpenRouter key: https://openrouter.ai/keys
 
 ## Authentication
@@ -145,7 +145,7 @@ null-agent auth status       # Show which providers are configured
 
 1. Environment variable (highest priority)
 2. OS keychain storage (via keytar)
-3. `.null-agent.json` config file
+3. `~/.null-agent/credentials.json` file fallback
 
 ### Setting Keys
 
@@ -207,13 +207,6 @@ Script execution, process management, and terminal sessions.
 | `sessionCreateTool` | `session_create` | Create persistent terminal sessions            |
 | `sessionAttachTool` | `session_attach` | Attach to existing sessions                    |
 | `taskSprintTool`    | `task_sprint`    | Run concurrent tasks with progress             |
-
-**Process Features:**
-
-- **Auto-Detection:** Automatically finds scripts from `package.json`, `Makefile`, and project conventions
-- **Ephemeral Processes:** Background processes die when the agent stops
-- **Streaming Modes:** Configure output as streamed, summarized, or both
-- **Singleton Managers:** Shared ProcessManager/SessionManager across all tool instances
 
 ### Git Tools
 
@@ -308,56 +301,332 @@ registry.register({
 });
 ```
 
+## Accountability & Developer Day Tracker
+
+null-agent includes a self-aware developer day companion that tracks what you are working on, keeps you accountable to your goals, and generates daily and weekly reports — all without leaving the terminal.
+
+### How it works
+
+Activity is tracked in two ways:
+
+- **Inferred** — every tool call is mapped to an activity type automatically. Reading files → `coding`. Running tests → `testing`. `git diff` → `review`. Shell commands are classified by regex (e.g. `jest` → `testing`, `inspect` → `debugging`).
+- **Explicit** — use `/track <type>` to manually declare what you are working on.
+
+Activity data is written to `~/.null-agent/accountability/activities/{date}.json` and is never sent anywhere.
+
+### Activity Types
+
+| Type        | Icon | Inferred from                                                              |
+| ----------- | ---- | -------------------------------------------------------------------------- |
+| `coding`    | ⌨    | `file_read`, `file_write`, `git_add`, `git_commit`, `shell` (build/deploy) |
+| `review`    | 👁   | `git_diff`, `git_log`, `git_show`, `code_review`                           |
+| `debugging` | 🔍   | Shell commands containing `debug`/`inspect`/`log`                          |
+| `testing`   | ✓    | Shell commands containing `test`/`jest`/`vitest`                           |
+| `docs`      | 📝   | Explicitly tracked                                                         |
+| `meeting`   | 📅   | Calendar events (via Google Calendar integration)                          |
+| `planning`  | —    | `git_branch`, `task_sprint`                                                |
+| `standup`   | —    | Explicitly tracked                                                         |
+| `break`     | 💤   | No activity detected for 30+ minutes                                       |
+
+### Face Mood by Activity
+
+The Null mascot (`◉`) changes expression based on what you are doing:
+
+| Activity  | Face   | Mood      |
+| --------- | ------ | --------- |
+| coding    | `◉◡⟳`  | Executing |
+| review    | `◉◡~`  | Thinking  |
+| debugging | `◉◡/`  | Confused  |
+| testing   | `◉◡\|` | Loading   |
+| meeting   | `◉◡.`  | Waiting   |
+| break     | `◉◡z`  | Sleeping  |
+
+### Status Bar
+
+The status bar shows the current activity and live duration:
+
+```
+╭─────────────────────────────────────────────────────────────────╮
+│ null-agent  v0.5.0  · my-project (main) ●   ⌨ coding  1h 23m  │
+╰─────────────────────────────────────────────────────────────────╯
+```
+
+### Daily Summary on Startup
+
+On launch, a panel shows today's meetings, goals, and yesterday's time breakdown:
+
+```
+╭──────────────────────────────────────────────────────────────────╮
+│ Good morning! Here's your day:                                    │
+│                                                                   │
+│ Meetings:                                                         │
+│   · 9:00 AM: Daily standup (15m)                                  │
+│   · 2:00 PM: Product sync (1h)                                    │
+│                                                                   │
+│ Goals:                                                            │
+│   · Complete auth refactor                                        │
+│   · Review 2 PRs                                                  │
+│                                                                   │
+│ Yesterday:                                                        │
+│   5h coding, 1h 30m meetings, 45m debugging                       │
+│                                                                   │
+│ Ctrl+S to dismiss · /report for full report                       │
+╰──────────────────────────────────────────────────────────────────╯
+```
+
+Press `Ctrl+S` to toggle the summary.
+
+### Goal Tracking
+
+```bash
+/goals               # List today's goals with status icons
+/goal add <text>     # Create a new daily goal
+/goal done <id>      # Mark a goal complete (triggers celebration)
+/goal rm <id>        # Delete a goal
+```
+
+Goal statuses: `○ pending` · `⟳ in-progress` · `✓ completed` · `✗ missed`
+
+### Activity Commands
+
+```bash
+/track coding        # Start tracking an explicit coding session
+/track meeting       # Log a meeting
+/track break         # Log a break
+/track stop          # Stop the current tracked activity
+```
+
+Valid types: `coding`, `review`, `debugging`, `testing`, `docs`, `meeting`, `planning`, `standup`, `break`, `other`
+
+### Reports
+
+```bash
+/report              # Generate today's report (saved to disk)
+/report week         # Generate this week's report
+```
+
+**Daily report format:**
+
+```markdown
+# Daily Report — April 11, 2026
+
+## Summary
+
+- **Active time:** 6h 45m
+- **Activities:** 12
+- **Commits:** 3
+- **Code reviews:** 2
+
+## Time Breakdown
+
+| Activity  | Time   | %   |
+| --------- | ------ | --- |
+| Coding    | 3h 20m | 49% |
+| Meetings  | 1h 30m | 22% |
+| Reviews   | 45m    | 11% |
+| Debugging | 30m    | 7%  |
+| Testing   | 20m    | 5%  |
+| Other     | 20m    | 6%  |
+
+## Activities
+
+- 9:00 AM - 9:15 AM: Morning standup (15m)
+- 9:15 AM - 10:30 AM: Feature implementation — auth module (1h 15m)
+  ...
+
+## Goals
+
+- [x] Complete auth module refactor
+- [ ] Review PR #42
+```
+
+Reports are saved to `~/.null-agent/accountability/reports/daily/YYYY-MM-DD.{md,json}` and `reports/weekly/YYYY-wNN.md`.
+
+### Proactive Reminders
+
+The accountability engine polls every minute and surfaces messages in the chat when:
+
+- A goal has been pending all day with no progress (`goal:reminder`)
+- A goal is past its due date (`goal:overdue`)
+- You have been coding or debugging for 2+ hours (`time:threshold` — break reminder)
+- A debugging session exceeds 1 hour (`time:milestone` — ask for help?)
+- It is 9–10 AM and you have not checked in (`daily:start`)
+- It is 5–6 PM and the day is ending (`daily:end`)
+
+### Using Accountability as a Library
+
+```ts
+import {
+  ActivityTracker,
+  Reporter,
+  Accountant,
+  GoalTracker,
+  AccountabilityStore,
+  AccountabilityConfigManager,
+} from "null-agent";
+
+const store = new AccountabilityStore();
+const tracker = new ActivityTracker();
+await tracker.init();
+
+// Explicit tracking
+const activityId = await tracker.startActivity("coding", "Auth module refactor");
+await tracker.endActivity(activityId);
+
+// Inferred tracking — call this in your tool hook
+await tracker.recordToolCall("file_write", { path: "src/auth.ts" }, "ok");
+
+// Session stats (real-time)
+const stats = tracker.getSessionStats();
+console.log(`Coding: ${stats.timeByType.coding}s`);
+
+// Daily report
+const reporter = new Reporter(store, tracker);
+const report = await reporter.generateDailyReport();
+console.log(reporter.formatDailyReport(report));
+await reporter.saveReport(report); // writes .md and .json to disk
+
+// Weekly report
+const monday = new Date(); // normalized to Monday
+const weekly = await reporter.generateWeeklyReport(monday);
+console.log(reporter.formatWeeklyReport(weekly));
+
+// Goals
+const goals = new GoalTracker(store);
+const goal = await goals.createGoal("Ship the auth feature", "daily");
+await goals.updateGoalProgress(goal.id, activityId);
+await goals.completeGoal(goal.id);
+
+// Accountant notifications
+const accountant = new Accountant(tracker);
+const notifications = await accountant.checkGoalProgress();
+for (const n of notifications) {
+  console.log(`[${n.priority}] ${n.message}`);
+}
+
+// Config
+const config = new AccountabilityConfigManager(store);
+await config.load();
+await config.setTrackingMode("explicit");
+await config.setBreakThreshold(90); // remind after 90 min
+```
+
+### Integrations (Phase 4 — Stubs)
+
+Google Calendar, Jira, and Linear integration stubs are included and ready to be wired up with credentials.
+
+```ts
+import { GoogleCalendarIntegration, JiraIntegration, LinearIntegration } from "null-agent";
+
+// Google Calendar — requires OAuth 2.0 (run: null-agent auth google)
+const calendar = new GoogleCalendarIntegration();
+calendar.configure({ accessToken: "...", refreshToken: "...", expiresAt: Date.now() + 3600_000 });
+const todayEvents = await calendar.getEvents(new Date());
+calendar.watchCalendar((events) => console.log("Upcoming:", events), 5);
+
+// Jira
+const jira = new JiraIntegration();
+await jira.configure({
+  type: "jira",
+  apiKey: "...",
+  baseUrl: "https://my.atlassian.net",
+  projectKey: "ENG",
+});
+const myTasks = await jira.getMyTasks(); // returns TaskItem[]
+
+// Linear
+const linear = new LinearIntegration();
+await linear.configure({ type: "linear", apiKey: "...", teamId: "..." });
+```
+
+### Storage Layout
+
+```
+~/.null-agent/accountability/
+├── activities/
+│   ├── 2026-04-10.json     ← daily activity log
+│   └── 2026-04-11.json
+├── reports/
+│   ├── daily/
+│   │   ├── 2026-04-10.json ← machine-readable
+│   │   └── 2026-04-10.md   ← human-readable Markdown
+│   └── weekly/
+│       └── 2026-w15.md
+├── goals/
+│   └── goals.json
+└── config.json             ← tracking preferences
+```
+
+---
+
 ## Interfaces
 
 ### Terminal UI
 
-Full interactive terminal interface built with [Ink](https://github.com/vadimdemedes/ink). Features a status bar, chat panel with message bubbles, animated Null mascot (`◉◡`), slash commands, and formatted tool call display.
+Full interactive terminal interface built with [Ink](https://github.com/vadimdemedes/ink). Features a status bar with live activity tracking, chat panel with message bubbles, animated Null mascot (`◉`), slash commands, formatted tool call display, and a daily summary panel.
 
 ```
-┌─────────────────────────────────┐
-│ null-agent v0.1.0 · project     │  ← Status bar
-├─────────────────────────────────┤
-│                                 │
-│  ▸ you                          │
-│    Read the config file         │
-│                                 │
-│  ▸ assistant                    │
-│  ┌─────────────────────────┐    │
-│  │ ⚙ file_read              │    │
-│  │ ✓ file_read → 12 lines  │    │
-│  └─────────────────────────┘    │
-│    The config contains...       │
-│                                 │
-├─────────────────────────────────┤
-│ ◉◡ ready · /help                │  ← Agent bar (always visible)
-├─────────────────────────────────┤
-│ > _                             │  ← Input
-└─────────────────────────────────┘
+╭─────────────────────────────────────────────────────╮
+│ null-agent v0.5.0 · project (main) ●  ⌨ coding 23m │  ← Status bar
+╰─────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────╮
+│ Good morning! Here's your day:                       │  ← Daily summary (Ctrl+S)
+│   Goals: · Ship auth feature  · Review 2 PRs         │
+│   Yesterday: 5h coding, 2h meetings                  │
+╰─────────────────────────────────────────────────────╯
+  ▸ you
+    Read the config file
+
+  ▸ assistant
+  ┌─────────────────────────────┐
+  │ ⚙ file_read                 │
+  │ ✓ file_read → 12 lines      │
+  └─────────────────────────────┘
+    The config contains...
+
+◉◡ ready · /help                                        ← Agent bar
+> _                                                     ← Input
 ```
 
 ```bash
 null-agent
 ```
 
-**Slash Commands:**
+### Slash Commands
 
-| Command               | Description                |
-| --------------------- | -------------------------- |
-| `/help`               | Show keyboard shortcuts    |
-| `/clear`              | Clear conversation history |
-| `/context`            | Show project context       |
-| `/history`            | List past conversations    |
-| `/search <query>`     | Search past conversations  |
-| `/resume <id>`        | Resume a past conversation |
-| `/tasks`              | Show tracked tasks         |
-| `/done <id>`          | Mark a task complete       |
-| `/config`             | Show personality config    |
-| `/config tone casual` | Change tone setting        |
-| `/model`              | Show current model         |
-| `/model <name>`       | Change model               |
-| `/models`             | List available models      |
-| `/exit`               | Exit                       |
+| Command               | Description                         |
+| --------------------- | ----------------------------------- |
+| `/help`               | Show keyboard shortcuts             |
+| `/clear`              | Clear conversation history          |
+| `/context`            | Show project context                |
+| `/history`            | List past conversations             |
+| `/search <query>`     | Search past conversations           |
+| `/resume <id>`        | Resume a past conversation          |
+| `/tasks`              | Show tracked tasks                  |
+| `/done <id>`          | Mark a task complete                |
+| `/config`             | Show personality config             |
+| `/config tone casual` | Change tone setting                 |
+| `/model`              | Show current model                  |
+| `/model <name>`       | Change model                        |
+| `/models`             | List available models               |
+| `/report`             | Generate today's activity report    |
+| `/report week`        | Generate this week's report         |
+| `/goals`              | List today's goals                  |
+| `/goal add <text>`    | Add a daily goal                    |
+| `/goal done <id>`     | Mark a goal complete                |
+| `/goal rm <id>`       | Delete a goal                       |
+| `/track <type>`       | Start tracking an explicit activity |
+| `/track stop`         | Stop the current activity           |
+| `/exit`               | Exit                                |
+
+**Keyboard shortcuts:**
+
+| Key       | Action                     |
+| --------- | -------------------------- |
+| `Ctrl+C`  | Exit                       |
+| `Ctrl+H`  | Toggle help overlay        |
+| `Ctrl+S`  | Toggle daily summary panel |
+| `↑` / `↓` | Navigate input history     |
 
 ### Readline REPL
 
@@ -369,7 +638,7 @@ null-agent --plain
 
 ### HTTP API Server
 
-REST API server with streaming SSE support. Default port 3737. Zero dependencies (uses Node.js built-in `http`).
+REST API server with streaming SSE support. Default port 3737.
 
 ```bash
 null-agent --server --port 3737 --host 0.0.0.0
@@ -421,26 +690,51 @@ config.personality = {
 await saveConfig(config);
 ```
 
-Or via CLI:
+Or via CLI slash commands in the TUI:
 
-```bash
-null-agent config
-null-agent config tone casual
-null-agent config verbosity minimal
-null-agent config proactivity active
+```
+/config tone casual
+/config verbosity minimal
+/config proactivity active
 ```
 
 Config is persisted at `~/.null-agent/config.json`.
 
-### Unified Config
-
-Layered config loading with priority: defaults < env vars < `~/.null-agent/config.json` < `.null-agent.json` in project root.
+### Tracking Preferences
 
 ```ts
-import { loadUnifiedConfig } from "null-agent";
+import { AccountabilityConfigManager, AccountabilityStore } from "null-agent";
 
-const config = await loadUnifiedConfig("./my-project");
-// config.provider, config.personality, config.permissions, etc.
+const config = new AccountabilityConfigManager(new AccountabilityStore());
+await config.load();
+
+await config.setTrackingMode("hybrid"); // "hybrid" | "explicit" | "implicit"
+await config.setBreakThreshold(90); // minutes before break reminder
+await config.toggleBreakReminders(true);
+await config.toggleMeetingReminders(true);
+await config.toggleGoalReminders(false);
+```
+
+Default config:
+
+```json
+{
+  "tracking": {
+    "mode": "hybrid",
+    "autoInfer": true,
+    "idleThresholdMinutes": 30,
+    "activityGroupingMinutes": 5
+  },
+  "reminders": {
+    "upcomingMeetings": true,
+    "meetingReminderMinutes": 5,
+    "breakReminders": true,
+    "breakThresholdMinutes": 120,
+    "dailyStartSummary": true,
+    "dailyEndSummary": true,
+    "goalReminders": true
+  }
+}
 ```
 
 ### Project Config
@@ -649,12 +943,7 @@ const tool = {
   typeboxSchema: toolParams(
     {
       name: String({ description: "The name" }),
-      options: Object(
-        {
-          properties: { verbose: String() },
-        },
-        ["verbose"],
-      ),
+      options: Object({ properties: { verbose: String() } }, ["verbose"]),
     },
     ["name"],
   ),
@@ -692,14 +981,8 @@ Generate, run, and fix tests automatically:
 ```ts
 import { generateTests, runTests, analyzeTestFailures, benchmark } from "null-agent";
 
-// Generate tests for a file
 const testFile = await generateTests("./src/auth.ts");
-await writeTestFile(testFile);
-
-// Run tests
 const results = await runTests();
-
-// Benchmark a function
 const result = await benchmark(() => myFunction(), { iterations: 100 });
 ```
 
@@ -730,24 +1013,6 @@ await manager.register({
 });
 ```
 
-## Event Bus
-
-Decoupled communication between modules:
-
-```ts
-import { EventBus, Events } from "null-agent";
-
-const bus = new EventBus();
-
-bus.on(Events.TOOL_AFTER, (event) => {
-  console.log(`Tool ${event.data.name} completed`);
-});
-
-bus.on(Events.AGENT_DONE, (event) => {
-  console.log("Agent finished:", event.data);
-});
-```
-
 ## Permission System
 
 Control what the agent can do:
@@ -770,62 +1035,56 @@ const permissions = new PermissionManager({
 - `confirm` — ask before destructive operations
 - `plan` — read-only mode
 
-## CI/CD Integration
-
-Generate CI/CD configs for automated code review:
-
-```ts
-import { setupCI, generateGitHubAction, generatePreCommitHook } from "null-agent";
-
-// Setup CI for a project
-await setupCI({
-  platform: "github",
-  reviewOnPR: true,
-  failOnCritical: true,
-  minScore: 70,
-});
-```
-
-## Session Export
-
-Export conversations in multiple formats:
-
-```ts
-import { exportToFile } from "null-agent";
-
-await exportToFile(conversation, {
-  format: "markdown", // or "json", "html"
-  outputPath: "./exports",
-});
-```
-
 ## Architecture
 
 ```
 src/
-  providers/       LLM provider abstraction (OpenAI, Anthropic, Gemini, OpenRouter)
-  tools/           Tool system (file, shell, git, workflow, review, testing)
-  agent/           Agent loop, orchestrator, tasks, suggestions, personality
-  cli/             CLI entry point, REPL, output formatting
-  tui/             Ink terminal UI (StatusBar, ChatPanel, InputBar, NullFace)
-  server/          HTTP API server with SSE streaming
-  memory/          Conversation persistence, session export
-  context/         Project knowledge scanning, context window management
-  awareness/       Git monitoring, file watching
-  bus/             Event bus for decoupled communication
-  config/          Unified config system
-  permission/      Permission management
-  plugin/          Plugin architecture
-  command/         Command pattern with undo support
-  auth/            API key management
-  review/          Code review system (security, perf, quality, CI)
-  testing/         Test generation, execution, benchmarking
+  providers/          LLM provider abstraction (OpenAI, Anthropic, Gemini, OpenRouter)
+  tools/              Tool system (file, shell, git, workflow, review, testing, web)
+  agent/              Agent loop, orchestrator, tasks, suggestions, personality
+  cli/                CLI entry point, REPL, output formatting
+  tui/                Ink terminal UI
+    app.tsx             Root component with slash commands, accountability wiring
+    components/
+      StatusBar.tsx     Live activity type + duration display
+      AgentBar.tsx      Mascot, status text, open task count
+      DailySummary.tsx  Startup panel: goals, meetings, yesterday's summary
+      ChatPanel.tsx     Message thread with tool call display
+      HelpOverlay.tsx   Keyboard shortcuts and command reference
+      NullFace.tsx      Animated mascot with 11 moods + activity-based mood
+      Notification.tsx  File/git event toasts
+      InputBar.tsx      Input with history navigation
+  server/             HTTP API server with SSE streaming
+  memory/             Conversation persistence, session export
+  context/            Project knowledge scanning, context window management
+  awareness/          Git monitoring, file watching
+  accountability/     Developer day tracker
+    types.ts            Activity, Goal, DayReport, WeeklyReport, SessionStats interfaces
+    tracker.ts          ActivityTracker: explicit + inferred tracking, goals
+    inferencer.ts       Tool → activity type mapping, shell command heuristics
+    reporter.ts         Daily/weekly report generation, Markdown/CSV/JSON export
+    accountant.ts       Proactive reminders, goal accountability, break suggestions
+    storage.ts          JSON persistence in ~/.null-agent/accountability/
+    goals.ts            GoalTracker: create, complete, miss, filter, format
+    config.ts           AccountabilityConfigManager: typed settings API
+    integrations/
+      calendar.ts       Google Calendar stub (OAuth + polling)
+      tasks.ts          Jira + Linear stubs
+  bus/                Event bus for decoupled communication
+  config/             Unified config system
+  permission/         Permission management
+  plugin/             Plugin architecture
+  command/            Command pattern with undo support
+  auth/               API key management (keychain + file fallback)
+  review/             Code review system (security, perf, quality, CI)
+  testing/            Test generation, execution, benchmarking
+  feet/               Process + session manager singletons
 ```
 
 ## CLI Reference
 
 ```
-null-agent - Interactive coding assistant
+null-agent — Interactive coding assistant
 
 Usage:
   null-agent                  Start interactive TUI
@@ -850,7 +1109,12 @@ Environment:
   ANTHROPIC_API_KEY   Anthropic API key
   GEMINI_API_KEY      Google Gemini API key (free tier available)
   OPENROUTER_API_KEY  OpenRouter API key (free models available)
+  TAVILY_API_KEY      Tavily search API key (free tier available)
 ```
+
+## Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md) for a full history of changes by version.
 
 ## License
 

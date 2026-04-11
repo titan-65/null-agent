@@ -77,6 +77,15 @@ export interface DayReport {
   calendarEvents?: CalendarEvent[];
 }
 
+export interface WeeklyReport {
+  weekStart: string; // YYYY-MM-DD (Monday)
+  weekEnd: string; // YYYY-MM-DD (Sunday)
+  dailyReports: DayReport[];
+  summary: ActivitySummary;
+  totalActiveDays: number;
+  totalActivities: number;
+}
+
 export interface SessionStats {
   sessionDuration: number;
   currentActivity: Activity | null;

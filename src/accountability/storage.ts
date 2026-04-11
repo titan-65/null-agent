@@ -1,15 +1,8 @@
 import { join } from "node:path";
-import { mkdir, readFile, writeFile, readdir, unlink } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import type { Activity, Goal, AccountabilityConfig, DayReport } from "./types.ts";
 import { DEFAULT_CONFIG } from "./types.ts";
-
-const BASE_DIR = join(homedir(), ".null-agent", "accountability");
-const ACTIVITIES_DIR = join(BASE_DIR, "activities");
-const REPORTS_DIR = join(BASE_DIR, "reports");
-const GOALS_DIR = join(BASE_DIR, "goals");
-const CONFIG_FILE = join(BASE_DIR, "config.json");
-const GOALS_FILE = join(GOALS_DIR, "goals.json");
 
 function getDateString(date?: Date): string {
   const d = date || new Date();
@@ -17,23 +10,48 @@ function getDateString(date?: Date): string {
 }
 
 export class AccountabilityStore {
+  private baseDir: string;
   private initialized = false;
+
+  constructor(baseDir?: string) {
+    this.baseDir = baseDir ?? join(homedir(), ".null-agent", "accountability");
+  }
+
+  private get activitiesDir(): string {
+    return join(this.baseDir, "activities");
+  }
+
+  private get reportsDir(): string {
+    return join(this.baseDir, "reports");
+  }
+
+  private get goalsDir(): string {
+    return join(this.baseDir, "goals");
+  }
+
+  private get configFile(): string {
+    return join(this.baseDir, "config.json");
+  }
+
+  private get goalsFile(): string {
+    return join(this.goalsDir, "goals.json");
+  }
 
   async init(): Promise<void> {
     if (this.initialized) return;
-    await mkdir(BASE_DIR, { recursive: true });
-    await mkdir(ACTIVITIES_DIR, { recursive: true });
-    await mkdir(REPORTS_DIR, { recursive: true });
-    await mkdir(join(REPORTS_DIR, "daily"), { recursive: true });
-    await mkdir(join(REPORTS_DIR, "weekly"), { recursive: true });
-    await mkdir(GOALS_DIR, { recursive: true });
+    await mkdir(this.baseDir, { recursive: true });
+    await mkdir(this.activitiesDir, { recursive: true });
+    await mkdir(this.reportsDir, { recursive: true });
+    await mkdir(join(this.reportsDir, "daily"), { recursive: true });
+    await mkdir(join(this.reportsDir, "weekly"), { recursive: true });
+    await mkdir(this.goalsDir, { recursive: true });
     this.initialized = true;
   }
 
   async loadConfig(): Promise<AccountabilityConfig> {
     await this.init();
     try {
-      const content = await readFile(CONFIG_FILE, "utf-8");
+      const content = await readFile(this.configFile, "utf-8");
       return JSON.parse(content) as AccountabilityConfig;
     } catch {
       return DEFAULT_CONFIG;
@@ -42,13 +60,13 @@ export class AccountabilityStore {
 
   async saveConfig(config: AccountabilityConfig): Promise<void> {
     await this.init();
-    await writeFile(CONFIG_FILE, JSON.stringify(config, null, 2), "utf-8");
+    await writeFile(this.configFile, JSON.stringify(config, null, 2), "utf-8");
   }
 
   async saveActivity(activity: Activity): Promise<void> {
     await this.init();
     const dateStr = getDateString(activity.startTime);
-    const filePath = join(ACTIVITIES_DIR, `${dateStr}.json`);
+    const filePath = join(this.activitiesDir, `${dateStr}.json`);
     let activities: Activity[] = [];
     try {
       const content = await readFile(filePath, "utf-8");
@@ -78,7 +96,7 @@ export class AccountabilityStore {
   async loadActivities(date?: Date): Promise<Activity[]> {
     await this.init();
     const dateStr = getDateString(date);
-    const filePath = join(ACTIVITIES_DIR, `${dateStr}.json`);
+    const filePath = join(this.activitiesDir, `${dateStr}.json`);
     try {
       const content = await readFile(filePath, "utf-8");
       const activities = JSON.parse(content) as Activity[];
@@ -105,13 +123,13 @@ export class AccountabilityStore {
 
   async saveGoals(goals: Goal[]): Promise<void> {
     await this.init();
-    await writeFile(GOALS_FILE, JSON.stringify(goals, null, 2), "utf-8");
+    await writeFile(this.goalsFile, JSON.stringify(goals, null, 2), "utf-8");
   }
 
   async loadGoals(): Promise<Goal[]> {
     await this.init();
     try {
-      const content = await readFile(GOALS_FILE, "utf-8");
+      const content = await readFile(this.goalsFile, "utf-8");
       const goals = JSON.parse(content) as Goal[];
       return goals.map((g) => ({
         ...g,
@@ -123,17 +141,25 @@ export class AccountabilityStore {
     }
   }
 
-  async saveDailyReport(date: string, report: DayReport): Promise<void> {
+  async saveDailyReport(date: string, report: DayReport, markdown?: string): Promise<void> {
     await this.init();
-    const mdPath = join(REPORTS_DIR, "daily", `${date}.md`);
-    const jsonPath = join(REPORTS_DIR, "daily", `${date}.json`);
-
+    const jsonPath = join(this.reportsDir, "daily", `${date}.json`);
     await writeFile(jsonPath, JSON.stringify(report, null, 2), "utf-8");
+    if (markdown) {
+      const mdPath = join(this.reportsDir, "daily", `${date}.md`);
+      await writeFile(mdPath, markdown, "utf-8");
+    }
+  }
+
+  async saveWeeklyReport(weekLabel: string, markdown: string): Promise<void> {
+    await this.init();
+    const mdPath = join(this.reportsDir, "weekly", `${weekLabel}.md`);
+    await writeFile(mdPath, markdown, "utf-8");
   }
 
   async loadDailyReport(date: string): Promise<DayReport | null> {
     await this.init();
-    const jsonPath = join(REPORTS_DIR, "daily", `${date}.json`);
+    const jsonPath = join(this.reportsDir, "daily", `${date}.json`);
     try {
       const content = await readFile(jsonPath, "utf-8");
       return JSON.parse(content) as DayReport;

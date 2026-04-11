@@ -20,8 +20,8 @@ export class ActivityTracker {
   private sessionStartTime: Date = new Date();
   private lastToolCallTime: Date = new Date();
 
-  constructor(config?: Partial<AccountabilityConfig>) {
-    this.store = new AccountabilityStore();
+  constructor(config?: Partial<AccountabilityConfig>, baseDir?: string) {
+    this.store = new AccountabilityStore(baseDir);
     this.inferencer = new ActivityInferencer();
     this.config = { ...DEFAULT_CONFIG, ...config };
   }
@@ -72,9 +72,12 @@ export class ActivityTracker {
 
   async resumeActivity(activityId: string): Promise<void> {
     const activity = this.activities.find((a) => a.id === activityId);
-    if (!activity || activity.endTime) return;
-
+    if (!activity) return;
+    // Clear the endTime so the activity is "active" again
+    activity.endTime = undefined;
+    activity.duration = undefined;
     this.currentActivity = activity;
+    await this.store.saveActivity(activity);
   }
 
   async recordToolCall(
@@ -82,6 +85,7 @@ export class ActivityTracker {
     args: Record<string, unknown>,
     result: string,
   ): Promise<void> {
+    if (this.config.tracking.mode === "explicit") return;
     if (!this.config.tracking.autoInfer) return;
 
     const now = new Date();
