@@ -14,6 +14,8 @@ import {
   printToolResult,
   printWelcome,
 } from "./output.ts";
+import { AccountabilityStore } from "../accountability/storage.ts";
+import { GoalTracker } from "../accountability/goals.ts";
 
 export async function startRepl(options?: {
   provider?: ProviderName;
@@ -42,6 +44,9 @@ export async function startRepl(options?: {
       rl.question(prompt, resolve);
     });
 
+  const store = new AccountabilityStore();
+  const goalTracker = new GoalTracker(store);
+
   while (true) {
     const input = await ask("\x1b[1m>\x1b[0m ");
     const trimmed = input.trim();
@@ -57,6 +62,62 @@ export async function startRepl(options?: {
     if (trimmed === "/clear") {
       agent.clearHistory();
       console.log("\x1b[90mHistory cleared.\x1b[0m");
+      continue;
+    }
+
+    if (trimmed === "/goals") {
+      const goals = await goalTracker.getTodaysGoals();
+      if (goals.length > 0) {
+        console.log(`\x1b[90mToday's goals:\n${goalTracker.formatGoalList(goals)}\x1b[0m`);
+      } else {
+        console.log("\x1b[90mNo goals for today. Add one with /goal add <text>\x1b[0m");
+      }
+      continue;
+    }
+
+    if (trimmed === "/goal") {
+      console.log(
+        "\x1b[90mUsage:\n  /goals             List today's goals\n  /goal add <text>   Add a goal\n  /goal done <id>    Mark a goal complete\n  /goal rm <id>      Delete a goal\x1b[0m",
+      );
+      continue;
+    }
+
+    if (trimmed.startsWith("/goal add ")) {
+      const description = trimmed.slice(10).trim();
+      if (description) {
+        const goal = await goalTracker.createGoal(description, "daily");
+        console.log(
+          `\x1b[90m✓ Goal added: "${goal.description}" [${goal.id.slice(0, 8)}]\x1b[0m`,
+        );
+      } else {
+        console.log("\x1b[90mUsage: /goal add <description>\x1b[0m");
+      }
+      continue;
+    }
+
+    if (trimmed.startsWith("/goal done ")) {
+      const id = trimmed.slice(11).trim();
+      const all = await goalTracker.getAllGoals();
+      const match = all.find((g) => g.id.startsWith(id));
+      if (match) {
+        await goalTracker.completeGoal(match.id);
+        console.log(`\x1b[90m✓ Completed: "${match.description}"\x1b[0m`);
+      } else {
+        console.log(`\x1b[90mGoal "${id}" not found. Use /goals to list your goals.\x1b[0m`);
+      }
+      continue;
+    }
+
+    if (trimmed.startsWith("/goal rm ")) {
+      const id = trimmed.slice(9).trim();
+      const all = await goalTracker.getAllGoals();
+      const match = all.find((g) => g.id.startsWith(id));
+      if (match) {
+        await goalTracker.deleteGoal(match.id);
+        console.log(`\x1b[90mGoal removed: "${match.description}"\x1b[0m`);
+      } else {
+        console.log(`\x1b[90mGoal "${id}" not found.\x1b[0m`);
+      }
       continue;
     }
 

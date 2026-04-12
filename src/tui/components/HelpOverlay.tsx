@@ -51,6 +51,7 @@ export function HelpOverlay() {
       h(Shortcut, { k: "/report", d: "Show today's activity report" }),
       h(Shortcut, { k: "/report week", d: "Show this week's report" }),
       h(Shortcut, { k: "/goals", d: "List today's goals" }),
+      h(Shortcut, { k: "/goal", d: "Show goal command help" }),
       h(Shortcut, { k: "/goal add <text>", d: "Add a daily goal" }),
       h(Shortcut, { k: "/goal done <id>", d: "Mark a goal complete" }),
       h(Shortcut, { k: "/goal rm <id>", d: "Delete a goal" }),

@@ -103,6 +103,11 @@ export function App({
   const accountant = useRef<Accountant | null>(null);
   const pendingToolArgs = useRef<Map<string, Record<string, unknown>>>(new Map());
 
+  // Always-fresh refs — updated every render so no stale-closure is possible regardless
+  // of which memoised version of handleSend React serves from its cache.
+  const goalCommandRef = useRef<(trimmed: string) => Promise<boolean>>(async () => false);
+  const handleSendImplRef = useRef<(input: string) => Promise<void>>(async () => {});
+
   const currentActivityType = activityTracker.current.getCurrentActivity()?.type ?? null;
   const mood =
     status !== "idle"
@@ -315,7 +320,165 @@ export function App({
     });
   }, []);
 
-  const handleSend = useCallback(
+  // Overwrite the ref on every render so handleSend never captures a stale closure
+  goalCommandRef.current = async (trimmed: string): Promise<boolean> => {
+    if (trimmed === "/goals") {
+      try {
+        const goals = await goalTracker.current.getTodaysGoals();
+        const text =
+          goals.length > 0
+            ? `Today's goals:\n${goalTracker.current.formatGoalList(goals)}`
+            : "No goals for today. Add one with /goal add <text>";
+        setMessages((prev: TuiMessage[]) => [
+          ...prev,
+          { role: "system", content: text, toolCalls: [], isStreaming: false },
+        ]);
+      } catch (err) {
+        setMessages((prev: TuiMessage[]) => [
+          ...prev,
+          {
+            role: "system",
+            content: `Error loading goals: ${err instanceof Error ? err.message : String(err)}`,
+            toolCalls: [],
+            isStreaming: false,
+          },
+        ]);
+      }
+      return true;
+    }
+
+    if (trimmed === "/goal") {
+      setMessages((prev: TuiMessage[]) => [
+        ...prev,
+        {
+          role: "system",
+          content:
+            "Goal commands:\n  /goals             List today's goals\n  /goal add <text>   Add a daily goal\n  /goal done <id>    Mark a goal complete\n  /goal rm <id>      Delete a goal",
+          toolCalls: [],
+          isStreaming: false,
+        },
+      ]);
+      return true;
+    }
+
+    if (trimmed.startsWith("/goal add ")) {
+      const description = trimmed.slice(10).trim();
+      try {
+        if (description) {
+          const goal = await goalTracker.current.createGoal(description, "daily");
+          const updatedGoals = await goalTracker.current.getTodaysGoals();
+          setTodaysGoals(updatedGoals);
+          setMessages((prev: TuiMessage[]) => [
+            ...prev,
+            {
+              role: "system",
+              content: `✓ Goal added: "${goal.description}" [${goal.id.slice(0, 8)}]`,
+              toolCalls: [],
+              isStreaming: false,
+            },
+          ]);
+        } else {
+          setMessages((prev: TuiMessage[]) => [
+            ...prev,
+            { role: "system", content: "Usage: /goal add <description>", toolCalls: [], isStreaming: false },
+          ]);
+        }
+      } catch (err) {
+        setMessages((prev: TuiMessage[]) => [
+          ...prev,
+          {
+            role: "system",
+            content: `Error adding goal: ${err instanceof Error ? err.message : String(err)}`,
+            toolCalls: [],
+            isStreaming: false,
+          },
+        ]);
+      }
+      return true;
+    }
+
+    if (trimmed.startsWith("/goal done ")) {
+      const id = trimmed.slice(11).trim();
+      try {
+        const all = await goalTracker.current.getAllGoals();
+        const match = all.find((g) => g.id.startsWith(id));
+        if (match) {
+          await goalTracker.current.completeGoal(match.id);
+          const updatedGoals = await goalTracker.current.getTodaysGoals();
+          setTodaysGoals(updatedGoals);
+          if (accountant.current) {
+            setMessages((prev: TuiMessage[]) => [
+              ...prev,
+              {
+                role: "system",
+                content: accountant.current!.celebrateWin({ ...match, status: "completed" }),
+                toolCalls: [],
+                isStreaming: false,
+              },
+            ]);
+          }
+        } else {
+          setMessages((prev: TuiMessage[]) => [
+            ...prev,
+            {
+              role: "system",
+              content: `Goal "${id}" not found. Use /goals to list your goals.`,
+              toolCalls: [],
+              isStreaming: false,
+            },
+          ]);
+        }
+      } catch (err) {
+        setMessages((prev: TuiMessage[]) => [
+          ...prev,
+          {
+            role: "system",
+            content: `Error completing goal: ${err instanceof Error ? err.message : String(err)}`,
+            toolCalls: [],
+            isStreaming: false,
+          },
+        ]);
+      }
+      return true;
+    }
+
+    if (trimmed.startsWith("/goal rm ")) {
+      const id = trimmed.slice(9).trim();
+      try {
+        const all = await goalTracker.current.getAllGoals();
+        const match = all.find((g) => g.id.startsWith(id));
+        if (match) {
+          await goalTracker.current.deleteGoal(match.id);
+          const updatedGoals = await goalTracker.current.getTodaysGoals();
+          setTodaysGoals(updatedGoals);
+          setMessages((prev: TuiMessage[]) => [
+            ...prev,
+            { role: "system", content: `Goal removed: "${match.description}"`, toolCalls: [], isStreaming: false },
+          ]);
+        } else {
+          setMessages((prev: TuiMessage[]) => [
+            ...prev,
+            { role: "system", content: `Goal "${id}" not found.`, toolCalls: [], isStreaming: false },
+          ]);
+        }
+      } catch (err) {
+        setMessages((prev: TuiMessage[]) => [
+          ...prev,
+          {
+            role: "system",
+            content: `Error removing goal: ${err instanceof Error ? err.message : String(err)}`,
+            toolCalls: [],
+            isStreaming: false,
+          },
+        ]);
+      }
+      return true;
+    }
+
+    return false;
+  };
+
+  const handleSendImpl = useCallback(
     async (input: string) => {
       const trimmed = input.trim();
 
@@ -625,6 +788,13 @@ export function App({
 
       // ── Accountability commands ───────────────────────────────────────
 
+      // Goal commands are handled via goalCommandRef so the latest implementation
+      // is always used regardless of which memoised version of handleSend runs.
+      if (trimmed === "/goals" || trimmed === "/goal" || trimmed.startsWith("/goal ")) {
+        await goalCommandRef.current(trimmed);
+        return;
+      }
+
       if (trimmed === "/report") {
         if (reporter.current) {
           const report = await reporter.current.generateDailyReport();
@@ -647,112 +817,6 @@ export function App({
           setMessages((prev) => [
             ...prev,
             { role: "system", content: text, toolCalls: [], isStreaming: false },
-          ]);
-        }
-        return;
-      }
-
-      if (trimmed === "/goals") {
-        const goals = await goalTracker.current.getTodaysGoals();
-        const text =
-          goals.length > 0
-            ? `Today's goals:\n${goalTracker.current.formatGoalList(goals)}`
-            : "No goals for today. Add one with /goal add <text>";
-        setMessages((prev) => [
-          ...prev,
-          { role: "system", content: text, toolCalls: [], isStreaming: false },
-        ]);
-        return;
-      }
-
-      if (trimmed.startsWith("/goal add ")) {
-        const description = trimmed.slice(10).trim();
-        if (description) {
-          const goal = await goalTracker.current.createGoal(description, "daily");
-          const updatedGoals = await goalTracker.current.getTodaysGoals();
-          setTodaysGoals(updatedGoals);
-          setMessages((prev) => [
-            ...prev,
-            {
-              role: "system",
-              content: `✓ Goal added: "${goal.description}" [${goal.id.slice(0, 8)}]`,
-              toolCalls: [],
-              isStreaming: false,
-            },
-          ]);
-        } else {
-          setMessages((prev) => [
-            ...prev,
-            {
-              role: "system",
-              content: "Usage: /goal add <description>",
-              toolCalls: [],
-              isStreaming: false,
-            },
-          ]);
-        }
-        return;
-      }
-
-      if (trimmed.startsWith("/goal done ")) {
-        const id = trimmed.slice(11).trim();
-        const all = await goalTracker.current.getAllGoals();
-        const match = all.find((g) => g.id.startsWith(id));
-        if (match) {
-          await goalTracker.current.completeGoal(match.id);
-          const updatedGoals = await goalTracker.current.getTodaysGoals();
-          setTodaysGoals(updatedGoals);
-          if (accountant.current) {
-            setMessages((prev) => [
-              ...prev,
-              {
-                role: "system",
-                content: accountant.current!.celebrateWin({ ...match, status: "completed" }),
-                toolCalls: [],
-                isStreaming: false,
-              },
-            ]);
-          }
-        } else {
-          setMessages((prev) => [
-            ...prev,
-            {
-              role: "system",
-              content: `Goal "${id}" not found. Use /goals to list your goals.`,
-              toolCalls: [],
-              isStreaming: false,
-            },
-          ]);
-        }
-        return;
-      }
-
-      if (trimmed.startsWith("/goal rm ")) {
-        const id = trimmed.slice(9).trim();
-        const all = await goalTracker.current.getAllGoals();
-        const match = all.find((g) => g.id.startsWith(id));
-        if (match) {
-          await goalTracker.current.deleteGoal(match.id);
-          const updatedGoals = await goalTracker.current.getTodaysGoals();
-          setTodaysGoals(updatedGoals);
-          setMessages((prev) => [
-            ...prev,
-            {
-              role: "system",
-              content: `Goal removed: "${match.description}"`,
-              toolCalls: [],
-              isStreaming: false,
-            },
-          ]);
-        } else {
-          setMessages((prev) => [
-            ...prev,
-            {
-              role: "system",
-              content: `Goal "${id}" not found.`,
-              toolCalls: [],
-              isStreaming: false,
-            },
           ]);
         }
         return;
@@ -934,6 +998,21 @@ export function App({
       setStatus("idle");
     },
     [agent, exit, project, projectKnowledge, previousConversation, startFlushing, stopFlushing],
+  );
+
+  // Keep the impl ref pointing at the freshest version on every render.
+  // This is what makes the stable wrapper below safe to call at any time.
+  handleSendImplRef.current = handleSendImpl;
+
+  // Stable outer wrapper — empty deps so Ink registers exactly ONE listener and
+  // never needs to re-register.  All real logic lives in handleSendImplRef.current
+  // (always the latest render's version) so stale closures cannot affect behaviour.
+  const handleSend = useCallback(
+    (input: string) => {
+      void handleSendImplRef.current(input);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
   );
 
   useInput((input, key) => {
